@@ -23,10 +23,13 @@ func NewNode(t *testing.T) *Node {
 		IPAddress:   "", // Must be set on container creation.
 		ContainerID: "", // Must be set on container creation.
 		Env: []string{
-			"LISTEN_ADDRESS=0.0.0.0",
-			"LISTEN_PORT=2000",
-			"EQUIVALENTS_REGISTRY=eth",
-			"MAX_HOPS=5",
+			"VTCPD_LISTEN_ADDRESS=0.0.0.0",
+			"VTCPD_LISTEN_PORT=2000",
+			"VTCPD_EQUIVALENTS_REGISTRY=eth",
+			"VTCPD_MAX_HOPS=5",
+			"CLI_LISTEN_ADDRESS=0.0.0.0",
+			"CLI_LISTEN_PORT=3000",
+			"CLI_LISTEN_PORT_TESTING=3001",
 		},
 	}
 }

@@ -1,0 +1,2 @@
+nodeImageName: "vtcpd-test:ubuntu"
+networkName: "vtcpd-test-network"

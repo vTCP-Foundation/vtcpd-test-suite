@@ -1,5 +1,4 @@
 # Vendor binaries
-deps/vtcpd/vtcpd
-deps/vtcpd/vtcpd-conf.json
-deps/cli/cli
-deps/cli/cli-conf.json
+deps/vtcpd/*
+deps/cli/*
+tests/conf.yaml

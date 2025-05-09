@@ -20,13 +20,14 @@ RUN useradd -r -s /usr/bin/nologin vtcpd
 
 ###################################################################################
 # Ubuntu runtime environment
-FROM ubuntu:22.04 AS runtime-ubuntu
+FROM ubuntu:24.04 AS runtime-ubuntu
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    libboost-system1.74.0 \
-    libboost-filesystem1.74.0 \
-    libboost-program-options1.74.0 \
+    libboost-system1.83.0 \
+    libboost-filesystem1.83.0 \
+    libboost-program-options1.83.0 \
     libsodium23 \
+    vim \
     sqlite3 && \
     rm -rf /var/lib/apt/lists/* && \
     useradd -r -s /usr/sbin/nologin vtcpd
@@ -39,41 +40,56 @@ FROM runtime-manjaro AS final-manjaro
 # Create vtcpd directory and set permissions
 RUN mkdir -p /vtcpd
 WORKDIR /vtcpd
+RUN mkdir -p vtcpd
 
-# Copy pre-built binaries and config from host
+# Copy pre-built binaries from host
 COPY ./deps/vtcpd /vtcpd/
-COPY ./deps/vtcpd/vtcpd-conf.json /vtcpd/conf.json
-
 COPY ./deps/cli/cli /vtcpd/cli
-COPY ./deps/cli/cli-conf.json /vtcpd/cli-conf.json
-
-# Make fifo and io directories with proper permissions
-RUN mkdir -p /vtcpd/fifo /vtcpd/io && \
-    chmod -R 777 /vtcpd && \
-    chmod +x /vtcpd/vtcpd
 
 # Define build arguments and convert them to runtime environment variables
-ARG LISTEN_ADDRESS=127.0.0.1
-ARG LISTEN_PORT=2000
-ARG EQUIVALENTS_REGISTRY=eth
-ARG MAX_HOPS=5
+ARG VTCPD_LISTEN_ADDRESS=127.0.0.1
+ARG VTCPD_LISTEN_PORT=2000
+ARG VTCPD_EQUIVALENTS_REGISTRY=eth
+ARG VTCPD_MAX_HOPS=5
+ARG CLI_LISTEN_ADDRESS=127.0.0.1
+ARG CLI_LISTEN_PORT=3000
+ARG CLI_LISTEN_PORT_TESTING=3001
 
-ENV LISTEN_ADDRESS=${LISTEN_ADDRESS}
-ENV LISTEN_PORT=${LISTEN_PORT}
-ENV EQUIVALENTS_REGISTRY=${EQUIVALENTS_REGISTRY}
-ENV MAX_HOPS=${MAX_HOPS}
+ENV VTCPD_LISTEN_ADDRESS=${VTCPD_LISTEN_ADDRESS}
+ENV VTCPD_LISTEN_PORT=${VTCPD_LISTEN_PORT}
+ENV VTCPD_EQUIVALENTS_REGISTRY=${VTCPD_EQUIVALENTS_REGISTRY}
+ENV VTCPD_MAX_HOPS=${VTCPD_MAX_HOPS}
+ENV CLI_LISTEN_ADDRESS=${CLI_LISTEN_ADDRESS}
+ENV CLI_LISTEN_PORT=${CLI_LISTEN_PORT}
+ENV CLI_LISTEN_PORT_TESTING=${CLI_LISTEN_PORT_TESTING}
 
 # Create startup script that uses runtime environment variables
 RUN echo '#!/bin/bash\n\
-if [ -n "$LISTEN_ADDRESS" ] && [ -n "$LISTEN_PORT" ]; then\n\
-    sed -i "s/\"address\":\"[^\"]*\"/\"address\":\"$LISTEN_ADDRESS:$LISTEN_PORT\"/g" /vtcpd/conf.json\n\
-fi\n\
-if [ -n "$EQUIVALENTS_REGISTRY" ]; then\n\
-    sed -i "s/\"equivalents_registry_address\":\"[^\"]*\"/\"equivalents_registry_address\":\"$EQUIVALENTS_REGISTRY\"/g" /vtcpd/conf.json\n\
-fi\n\
-if [ -n "$MAX_HOPS" ]; then\n\
-    sed -i "s/\"max_hops_count\":[[:space:]]*[0-9][0-9]*/\"max_hops_count\": $MAX_HOPS/g" /vtcpd/conf.json\n\
-fi\n\
+cd /vtcp\n\
+# Create vtcpd config file
+cat <<EOF > /vtcp/vtcpd/conf.json\n\
+{\n\
+  "addresses": [\n\
+    {\n\
+      "type": "ipv4",\n\
+      "address": "${VTCPD_LISTEN_ADDRESS}:${VTCPD_LISTEN_PORT}"\n\
+    }\n\
+  ],\n\
+  "equivalents_registry_address": "${VTCPD_EQUIVALENTS_REGISTRY}",\n\
+  "max_hops_count": ${VTCPD_MAX_HOPS}\n\
+}\n\
+EOF\n\
+# Create cli config file
+    cat <<EOF > /vtcp/conf.yaml\n\
+workdir: "/vtcp/vtcpd/"\n\
+vtcpd_path: "/vtcp/vtcpd/vtcpd"\n\
+http:\n\
+  host: "${CLI_LISTEN_ADDRESS}"\n\
+  port: ${CLI_LISTEN_PORT}\n\
+http_testing:\n\
+  host: "${CLI_LISTEN_ADDRESS}"\n\
+  port: ${CLI_LISTEN_PORT_TESTING}\n\
+EOF\n\
 exec "$@"' > /docker-entrypoint.sh && \
 chmod +x /docker-entrypoint.sh
 
@@ -86,45 +102,60 @@ CMD ["/vtcpd/vtcpd"]
 FROM runtime-ubuntu AS final-ubuntu
 
 # Create vtcpd directory and set permissions
-RUN mkdir -p /vtcpd
-WORKDIR /vtcpd
+RUN mkdir -p /vtcp
+WORKDIR /vtcp
+RUN mkdir -p vtcpd
 
-# Copy pre-built binaries and config from host
-COPY ./deps/vtcpd /vtcpd/
-COPY ./deps/vtcpd/vtcpd-conf.json /vtcpd/conf.json
-
-COPY ./deps/cli/cli /vtcpd/cli
-COPY ./deps/cli/cli-conf.json /vtcpd/cli-conf.json
-
-# Make fifo and io directories with proper permissions
-RUN mkdir -p /vtcpd/fifo /vtcpd/io && \
-    chmod -R 777 /vtcpd && \
-    chmod +x /vtcpd/vtcpd
+# Copy pre-built binaries from host
+COPY ./deps/vtcpd/vtcpd /vtcp/vtcpd/
+COPY ./deps/cli/cli /vtcp/cli
 
 # Define build arguments and convert them to runtime environment variables
-ARG LISTEN_ADDRESS=127.0.0.1
-ARG LISTEN_PORT=2000
-ARG EQUIVALENTS_REGISTRY=eth
-ARG MAX_HOPS=5
+ARG VTCPD_LISTEN_ADDRESS=127.0.0.1
+ARG VTCPD_LISTEN_PORT=2000
+ARG VTCPD_EQUIVALENTS_REGISTRY=eth
+ARG VTCPD_MAX_HOPS=5
+ARG CLI_LISTEN_ADDRESS=127.0.0.1
+ARG CLI_LISTEN_PORT=3000
+ARG CLI_LISTEN_PORT_TESTING=3001
 
-ENV LISTEN_ADDRESS=${LISTEN_ADDRESS}
-ENV LISTEN_PORT=${LISTEN_PORT}
-ENV EQUIVALENTS_REGISTRY=${EQUIVALENTS_REGISTRY}
-ENV MAX_HOPS=${MAX_HOPS}
+ENV VTCPD_LISTEN_ADDRESS=${VTCPD_LISTEN_ADDRESS}
+ENV VTCPD_LISTEN_PORT=${VTCPD_LISTEN_PORT}
+ENV VTCPD_EQUIVALENTS_REGISTRY=${VTCPD_EQUIVALENTS_REGISTRY}
+ENV VTCPD_MAX_HOPS=${VTCPD_MAX_HOPS}
+ENV CLI_LISTEN_ADDRESS=${CLI_LISTEN_ADDRESS}
+ENV CLI_LISTEN_PORT=${CLI_LISTEN_PORT}
+ENV CLI_LISTEN_PORT_TESTING=${CLI_LISTEN_PORT_TESTING}
 
 # Create startup script that uses runtime environment variables
 RUN echo '#!/bin/bash\n\
-if [ -n "$LISTEN_ADDRESS" ] && [ -n "$LISTEN_PORT" ]; then\n\
-    sed -i "s/\"address\":\"[^\"]*\"/\"address\":\"$LISTEN_ADDRESS:$LISTEN_PORT\"/g" /vtcpd/conf.json\n\
-fi\n\
-if [ -n "$EQUIVALENTS_REGISTRY" ]; then\n\
-    sed -i "s/\"equivalents_registry_address\":\"[^\"]*\"/\"equivalents_registry_address\":\"$EQUIVALENTS_REGISTRY\"/g" /vtcpd/conf.json\n\
-fi\n\
-if [ -n "$MAX_HOPS" ]; then\n\
-    sed -i "s/\"max_hops_count\":[[:space:]]*[0-9][0-9]*/\"max_hops_count\": $MAX_HOPS/g" /vtcpd/conf.json\n\
-fi\n\
+cd /vtcp\n\
+# Create vtcpd config file
+cat <<EOF > /vtcp/vtcpd/conf.json\n\
+{\n\
+  "addresses": [\n\
+    {\n\
+      "type": "ipv4",\n\
+      "address": "${VTCPD_LISTEN_ADDRESS}:${VTCPD_LISTEN_PORT}"\n\
+    }\n\
+  ],\n\
+  "equivalents_registry_address": "${VTCPD_EQUIVALENTS_REGISTRY}",\n\
+  "max_hops_count": ${VTCPD_MAX_HOPS}\n\
+}\n\
+EOF\n\
+# Create cli config file
+    cat <<EOF > /vtcp/conf.yaml\n\
+workdir: "/vtcp/vtcpd/"\n\
+vtcpd_path: "/vtcp/vtcpd/vtcpd"\n\
+http:\n\
+  host: "${CLI_LISTEN_ADDRESS}"\n\
+  port: ${CLI_LISTEN_PORT}\n\
+http_testing:\n\
+  host: "${CLI_LISTEN_ADDRESS}"\n\
+  port: ${CLI_LISTEN_PORT_TESTING}\n\
+EOF\n\
 exec "$@"' > /docker-entrypoint.sh && \
 chmod +x /docker-entrypoint.sh
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["/vtcpd/vtcpd"]
+CMD ["./cli", "start-http"]

@@ -4,17 +4,12 @@
 #
 
 VTCPD_BIN := /path/to/vtcpd/binary
-VTCPD_CONF := /path/to/vtcpd/config
-
 CLI_BIN := /path/to/cli/binary
-CLI_CONF := /path/to/cli/config
 
 init-deps-symlinks:
-	rm -f deps/vtcpd/vtcpd deps/vtcpd/vtcpd-conf.json deps/cli/cli deps/cli/cli-conf.json
+	rm -f deps/vtcpd/vtcpd deps/cli/cli
 	ln -f $(VTCPD_BIN) deps/vtcpd/vtcpd
-	ln -f $(VTCPD_CONF) deps/vtcpd/vtcpd-conf.json
 	ln -f $(CLI_BIN) deps/cli/cli
-	ln -f $(CLI_CONF) deps/cli/cli-conf.json
 
 
 ################################################################################
@@ -29,21 +24,28 @@ init-deps-symlinks:
 # WARN: Ensure deps binaries are properly set up before running this command!
 docker-build-test-manjaro:
 	docker build --target final-manjaro \
-		--build-arg LISTEN_ADDRESS=0.0.0.0 \
-		--build-arg LISTEN_PORT=2000 \
-		--build-arg EQUIVALENTS_REGISTRY=eth \
-		--build-arg MAX_HOPS=5 \
+		--build-arg VTCPD_LISTEN_ADDRESS=0.0.0.0 \
+		--build-arg VTCPD_LISTEN_PORT=2000 \
+		--build-arg VTCPD_EQUIVALENTS_REGISTRY=eth \
+		--build-arg VTCPD_MAX_HOPS=5 \
+		--build-arg CLI_LISTEN_ADDRESS=0.0.0.0 \
+		--build-arg CLI_LISTEN_PORT=3000 \
+		--build-arg CLI_LISTEN_PORT_TESTING=3001 \
 		-t vtcpd-test:manjaro .
 
 
 # Builds testing image for Ubuntu.
 # WARN: Ensure deps binaries are properly set up before running this command!
 docker-build-test-ubuntu:
+	docker-build-test-ubuntu:
 	docker build --target final-ubuntu \
-		--build-arg LISTEN_ADDRESS=0.0.0.0 \
-		--build-arg LISTEN_PORT=2000 \
-		--build-arg EQUIVALENTS_REGISTRY=eth \
-		--build-arg MAX_HOPS=5 \
+		--build-arg VTCPD_LISTEN_ADDRESS=0.0.0.0 \
+		--build-arg VTCPD_LISTEN_PORT=2000 \
+		--build-arg VTCPD_EQUIVALENTS_REGISTRY=eth \
+		--build-arg VTCPD_MAX_HOPS=5 \
+		--build-arg CLI_LISTEN_ADDRESS=0.0.0.0 \
+		--build-arg CLI_LISTEN_PORT=3000 \
+		--build-arg CLI_LISTEN_PORT_TESTING=3001 \
 		-t vtcpd-test:ubuntu .
 
 

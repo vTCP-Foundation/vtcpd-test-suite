@@ -5,13 +5,18 @@ import (
 	"sync"
 	"testing"
 
+	// Assuming your go.mod module path is 'github.com/vTCP-Foundation/vtcpd-test-suite'
+	// Adjust this path if your module name is different.
+	"github.com/vTCP-Foundation/vtcpd-test-suite/internal/conf"
 	vtcp "github.com/vTCP-Foundation/vtcpd-test-suite/pkg/testsuite"
 )
 
 var (
+	// Get settings from the central configuration package
+	testCfg         = conf.GetConfig()
 	clusterSettings = &vtcp.ClusterSettings{
-		NodeImageName: "vtcpd-test:manjaro",
-		NetworkName:   "vtcpd-test-network",
+		NodeImageName: testCfg.NodeImageName,
+		NetworkName:   testCfg.NetworkName,
 	}
 )
 

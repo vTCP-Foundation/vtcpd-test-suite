@@ -6,7 +6,7 @@ This directory contains symlinks to the CLI binary and its configuration file.
 ```
 .
 ├── cli             # Symlink to CLI binary
-└── cli-conf.json   # Symlink to CLI configuration file
+└── cli-conf.yaml   # Symlink to CLI configuration file
 ```
 
 ## Requirements
