@@ -58,14 +58,22 @@ func (c *Cluster) RunNode(ctx context.Context, t *testing.T, wg *sync.WaitGroup,
 		&container.Config{
 			Image: c.settings.NodeImageName,
 			ExposedPorts: nat.PortSet{
-				nat.Port(strconv.Itoa(int(node.Port))): struct{}{},
+				nat.Port(strconv.Itoa(int(node.NodePort))):    struct{}{},
+				nat.Port(strconv.Itoa(int(node.CLIPort))):     struct{}{},
+				nat.Port(strconv.Itoa(int(node.CLIPortTest))): struct{}{},
 			},
 			Env: node.Env,
 		},
 		&container.HostConfig{
 			NetworkMode: container.NetworkMode(c.networkID),
 			PortBindings: nat.PortMap{
-				nat.Port(strconv.Itoa(int(node.Port))): []nat.PortBinding{
+				nat.Port(strconv.Itoa(int(node.NodePort))): []nat.PortBinding{
+					{
+						HostIP:   "0.0.0.0",
+						HostPort: "0", // Let Docker assign a random port
+					},
+				},
+				nat.Port(strconv.Itoa(int(node.CLIPort))): []nat.PortBinding{
 					{
 						HostIP:   "0.0.0.0",
 						HostPort: "0", // Let Docker assign a random port
@@ -77,6 +85,9 @@ func (c *Cluster) RunNode(ctx context.Context, t *testing.T, wg *sync.WaitGroup,
 			EndpointsConfig: map[string]*network.EndpointSettings{
 				c.settings.NetworkName: {
 					NetworkID: c.networkID,
+					IPAMConfig: &network.EndpointIPAMConfig{
+						IPv4Address: node.IPAddress,
+					},
 				},
 			},
 		},
@@ -92,26 +103,18 @@ func (c *Cluster) RunNode(ctx context.Context, t *testing.T, wg *sync.WaitGroup,
 		return fmt.Errorf("failed to start container: %v", err)
 	}
 
-	// Get container info
-	inspect, err := c.cli.ContainerInspect(c.ctx, resp.ID)
-	if err != nil {
-		return fmt.Errorf("failed to inspect container: %v", err)
-	}
-
-	ipAddress := inspect.NetworkSettings.Networks[c.settings.NetworkName].IPAddress
-	node.IPAddress = ipAddress
 	node.ContainerID = resp.ID
 
 	// Automatically stop and remove container when test finishes.
 	// Helps prevent boilerplate code in tests.
 	t.Cleanup(func() {
-		secondsToWait := 5
-		if err := c.cli.ContainerStop(c.ctx, resp.ID, container.StopOptions{Timeout: &secondsToWait}); err != nil {
-			t.Logf("failed to stop container: %v", err)
-		}
-		if err := c.cli.ContainerRemove(c.ctx, resp.ID, container.RemoveOptions{}); err != nil {
-			t.Logf("failed to remove container: %v", err)
-		}
+		// secondsToWait := 5
+		// if err := c.cli.ContainerStop(c.ctx, resp.ID, container.StopOptions{Timeout: &secondsToWait}); err != nil {
+		// 	t.Logf("failed to stop container: %v", err)
+		// }
+		// if err := c.cli.ContainerRemove(c.ctx, resp.ID, container.RemoveOptions{}); err != nil {
+		// 	t.Logf("failed to remove container: %v", err)
+		// }
 	})
 
 	return nil
@@ -133,6 +136,14 @@ func (c *Cluster) initNetwork() (string, error) {
 	// Create network if it doesn't exist
 	resp, err := c.cli.NetworkCreate(c.ctx, c.settings.NetworkName, network.CreateOptions{
 		Driver: "bridge",
+		IPAM: &network.IPAM{
+			Driver: "default",
+			Config: []network.IPAMConfig{
+				{
+					Subnet: "172.18.0.0/16",
+				},
+			},
+		},
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to create network: %v", err)
