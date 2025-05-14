@@ -1,3 +1,4 @@
+.vscode/*
 # Vendor binaries
 deps/vtcpd/*
 deps/cli/*

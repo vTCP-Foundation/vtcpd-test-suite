@@ -2,8 +2,7 @@ package tests
 
 import (
 	"context"
-	"fmt"
-	"sync"
+	"strconv"
 	"testing"
 	"time"
 
@@ -23,8 +22,10 @@ var (
 )
 
 func TestTrustLineSet(t *testing.T) {
-	nodeA := vtcp.NewNode(t, "172.18.0.2")
-	nodeB := vtcp.NewNode(t, "172.18.0.3")
+	nodeA := vtcp.NewNode(t, "172.18.0.2", "nodeA")
+	nodeB := vtcp.NewNode(t, "172.18.0.3", "nodeB2")
+
+	//time.Sleep(30 * time.Second)
 
 	ctx := context.Background()
 	cluster, err := vtcp.NewCluster(ctx, t, clusterSettings)
@@ -32,90 +33,18 @@ func TestTrustLineSet(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	wg := sync.WaitGroup{}
-	{
-		err = cluster.RunNode(ctx, t, &wg, nodeA)
-		if err != nil {
-			t.Fatalf("failed to run nodeA: %v", err)
-		}
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
 
-		err = cluster.RunNode(ctx, t, &wg, nodeB)
-		if err != nil {
-			t.Fatalf("failed to run nodeB: %v", err)
-		}
-	}
-	wg.Wait()
+	nodeA.OpenChannelAndCheck(t, nodeB)
 
-	println(nodeA.IPAddress)
-	println(nodeB.IPAddress)
+	equivalent := "1001"
+	maxPositiveBalance := 100000000
+	nodeA.CreateSettlementLineAndCheck(t, nodeB, equivalent, strconv.Itoa(maxPositiveBalance))
 
-	println(nodeA.ContainerID)
-	println(nodeB.ContainerID)
+	transactionAmount := 10000
+	nodeB.CreateTransactionCheckStatus(t, nodeA, equivalent, strconv.Itoa(transactionAmount), vtcp.StatusOK)
+	time.Sleep(1 * time.Second)
 
-	time.Sleep(2 * time.Second)
-
-	err = nodeA.OpenChannel(nodeB)
-	if err != nil {
-		println(err.Error())
-	} else {
-		println("Channel opened successfully")
-	}
-
-	channelInfo, err := nodeA.GetChannelInfo(nodeB)
-	if err != nil {
-		println(err.Error())
-	} else {
-		println(fmt.Sprintf("Channel on A side: id:%s, isConfirmed:%s", channelInfo.ChannelID, channelInfo.ChannelConfirmed))
-	}
-
-	channelInfo, err = nodeB.GetChannelInfo(nodeA)
-	if err != nil {
-		println(err.Error())
-	} else {
-		println(fmt.Sprintf("Channel on B side: id:%s, isConfirmed:%s", channelInfo.ChannelID, channelInfo.ChannelConfirmed))
-	}
-
-	equivalent := "1002"
-
-	err = nodeA.CreateSettlementLine(nodeB, equivalent, "1000000000000000000")
-	if err != nil {
-		println(err.Error())
-	} else {
-		println(fmt.Sprintf("Settlement line in %s equivalent created successfully", equivalent))
-	}
-
-	settlmentLineInfo, err := nodeA.GetSettlementsLineInfoByAddress(nodeB, equivalent)
-	if err != nil {
-		println(err.Error())
-	} else {
-		println(fmt.Sprintf("Settlement line info on A side: %+v", settlmentLineInfo))
-	}
-
-	settlmentLineInfo, err = nodeB.GetSettlementsLineInfoByAddress(nodeA, equivalent)
-	if err != nil {
-		println(err.Error())
-	} else {
-		println(fmt.Sprintf("Settlement line info on B side: %+v", settlmentLineInfo))
-	}
-
-	transactionUUID, err := nodeB.CreateTransaction(nodeA, equivalent, "10000")
-	if err != nil {
-		println(err.Error())
-	} else {
-		println(fmt.Sprintf("Transaction created successfully: %s", transactionUUID))
-	}
-
-	settlmentLineInfo, err = nodeA.GetSettlementsLineInfoByAddress(nodeB, equivalent)
-	if err != nil {
-		println(err.Error())
-	} else {
-		println(fmt.Sprintf("Settlement line info on A side: %+v", settlmentLineInfo))
-	}
-
-	settlmentLineInfo, err = nodeB.GetSettlementsLineInfoByAddress(nodeA, equivalent)
-	if err != nil {
-		println(err.Error())
-	} else {
-		println(fmt.Sprintf("Settlement line info on B side: %+v", settlmentLineInfo))
-	}
+	nodeA.CheckActiveSettlementLine(t, nodeB, equivalent, strconv.Itoa(maxPositiveBalance), "0", strconv.Itoa(transactionAmount))
+	nodeB.CheckActiveSettlementLine(t, nodeA, equivalent, "0", strconv.Itoa(maxPositiveBalance), strconv.Itoa(-transactionAmount))
 }
