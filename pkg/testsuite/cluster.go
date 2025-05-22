@@ -12,7 +12,6 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	"github.com/google/uuid"
 )
 
 type ClusterSettings struct {
@@ -33,22 +32,10 @@ func NewCluster(ctx context.Context, t *testing.T, settings *ClusterSettings) (*
 		return nil, fmt.Errorf("failed to create docker client: %v", err)
 	}
 
-	// Create a unique network name for this cluster instance
-	// Use first 8 chars of a UUID for a short, likely unique suffix.
-	idSuffix := uuid.NewString()[:8]
-	uniqueNetworkName := settings.NetworkName + "-" + idSuffix
-
-	// Use a copy of the settings for this cluster instance with the unique network name.
-	// This is important so that the original settings object isn't modified if it's shared,
-	// and so that c.settings.NetworkName inside methods refers to the unique one.
-	currentClusterSettings := *settings // Copy struct
-	currentClusterSettings.NetworkName = uniqueNetworkName
-	t.Logf("Using unique network name for this test run: %s", uniqueNetworkName)
-
 	cluster := &Cluster{
 		cli:      cli,
 		ctx:      ctx,
-		settings: &currentClusterSettings, // Store pointer to the struct with unique name
+		settings: settings,
 	}
 
 	networkID, err := cluster.initNetwork(t)
@@ -59,14 +46,14 @@ func NewCluster(ctx context.Context, t *testing.T, settings *ClusterSettings) (*
 	}
 
 	t.Cleanup(func() {
-		// Capture networkName and networkID at the time of cleanup registration
-		nameForCleanup := cluster.settings.NetworkName
-		idForCleanup := cluster.networkID
-		if err := cluster.dropNetwork(); err != nil {
-			t.Logf("Failed to remove network '%s' (ID: %s): %v", nameForCleanup, idForCleanup, err)
-		} else {
-			t.Logf("Successfully removed network '%s' (ID: %s)", nameForCleanup, idForCleanup)
-		}
+		// // Capture networkName and networkID at the time of cleanup registration
+		// nameForCleanup := cluster.settings.NetworkName
+		// idForCleanup := cluster.networkID
+		// if err := cluster.dropNetwork(); err != nil {
+		// 	t.Logf("Failed to remove network '%s' (ID: %s): %v", nameForCleanup, idForCleanup, err)
+		// } else {
+		// 	t.Logf("Successfully removed network '%s' (ID: %s)", nameForCleanup, idForCleanup)
+		// }
 	})
 
 	cluster.networkID = networkID
@@ -157,18 +144,51 @@ func (c *Cluster) RunNodes(ctx context.Context, t *testing.T, nodes []*Node) {
 		println(fmt.Sprintf("Node %s is running : [%s : %s]", node.Alias, node.IPAddress, node.ContainerID))
 	}
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
+}
+
+func (c *Cluster) RunSingleNode(ctx context.Context, t *testing.T, node *Node) {
+	// Use a dummy WaitGroup as RunNode expects one, though for a single node it's not strictly necessary for synchronization here.
+	var wg sync.WaitGroup
+	wg.Add(1) // Add to the counter before starting the goroutine/operation
+	go func() {
+		defer wg.Done()                     // Decrement counter when goroutine finishes
+		err := c.RunNode(ctx, t, &wg, node) // Pass wg, though RunNode doesn't use it to wait directly
+		if err != nil {
+			t.Fatalf("failed to run %s: %v", node.Alias, err)
+		}
+	}()
+	wg.Wait() // Wait for the single node to be processed by RunNode
+
+	t.Logf("Node %s is running : [%s : %s]", node.Alias, node.IPAddress, node.ContainerID)
+	time.Sleep(2 * time.Second) // Give some time for the node to fully initialize
+}
+
+func (c *Cluster) StopSingleNode(ctx context.Context, t *testing.T, node *Node) {
+	if node.ContainerID == "" {
+		t.Logf("Node %s has no container ID, skipping stop.", node.Alias)
+		return
+	}
+	secondsToWait := 5
+	if err := c.cli.ContainerStop(c.ctx, node.ContainerID, container.StopOptions{Timeout: &secondsToWait}); err != nil {
+		t.Logf("failed to stop container for node %s (ID: %s): %v", node.Alias, node.ContainerID, err)
+	}
+	// Note: ContainerRemove is handled by t.Cleanup in RunNode
+	t.Logf("Stopped container for node %s (ID: %s)", node.Alias, node.ContainerID)
+}
+
+func (c *Cluster) StopNodes(ctx context.Context, t *testing.T, nodes []*Node) {
+	for _, node := range nodes {
+		c.StopSingleNode(ctx, t, node)
+	}
 }
 
 func (c *Cluster) initNetwork(t *testing.T) (string, error) {
 	// Try to inspect the network by name to see if it exists.
 	networkResource, inspectErr := c.cli.NetworkInspect(c.ctx, c.settings.NetworkName, network.InspectOptions{})
 	if inspectErr == nil {
-		// Network exists. Attempt to remove it to ensure a clean state.
-		if removeErr := c.cli.NetworkRemove(c.ctx, networkResource.ID); removeErr != nil {
-			t.Logf("Warning: Pre-emptive removal of existing network %s (ID: %s) failed: %v. This might be due to attached containers or other issues.", c.settings.NetworkName, networkResource.ID, removeErr)
-			// We'll still try to create it; if it fails, that error will be more definitive.
-		}
+		t.Logf("Network %s already exists.", c.settings.NetworkName)
+		return networkResource.ID, nil
 	} else if !client.IsErrNotFound(inspectErr) {
 		// Inspect failed for a reason other than "not found", which is an issue.
 		return "", fmt.Errorf("failed to inspect network %s prior to creation: %v", c.settings.NetworkName, inspectErr)
