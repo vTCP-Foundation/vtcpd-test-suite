@@ -1,2 +1,6 @@
 nodeImageName: "vtcpd-test:ubuntu"
 networkName: "vtcpd-test-network"
+# Optional: sudo password for network configuration commands (tc, ip)
+# If not specified, sudo commands will prompt for password interactively
+# Uncomment and set your password to avoid interactive prompts:
+# sudoPassword: "your_password_here"

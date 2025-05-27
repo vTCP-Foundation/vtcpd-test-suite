@@ -10,6 +10,7 @@ import (
 type ClusterSettings struct {
 	NodeImageName string `yaml:"nodeImageName"`
 	NetworkName   string `yaml:"networkName"`
+	SudoPassword  string `yaml:"sudoPassword"`
 }
 
 const (
@@ -46,8 +47,6 @@ func init() {
 	if err := v.Unmarshal(&effectiveConfig); err != nil {
 		log.Printf("ERROR: Failed to unmarshal config: %v", err)
 	}
-
-	log.Printf("INFO: Final test configuration: %+v", effectiveConfig)
 }
 
 // GetConfig returns the loaded and processed cluster configuration.

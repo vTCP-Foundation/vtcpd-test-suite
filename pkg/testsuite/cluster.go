@@ -1,9 +1,13 @@
 package testsuite
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os/exec"
+	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -17,6 +21,7 @@ import (
 type ClusterSettings struct {
 	NodeImageName string
 	NetworkName   string
+	SudoPassword  string
 }
 
 type Cluster struct {
@@ -45,16 +50,7 @@ func NewCluster(ctx context.Context, t *testing.T, settings *ClusterSettings) (*
 		return nil, fmt.Errorf("failed to create cluster using network name '%s': %w", cluster.settings.NetworkName, err)
 	}
 
-	t.Cleanup(func() {
-		// // Capture networkName and networkID at the time of cleanup registration
-		// nameForCleanup := cluster.settings.NetworkName
-		// idForCleanup := cluster.networkID
-		// if err := cluster.dropNetwork(); err != nil {
-		// 	t.Logf("Failed to remove network '%s' (ID: %s): %v", nameForCleanup, idForCleanup, err)
-		// } else {
-		// 	t.Logf("Successfully removed network '%s' (ID: %s)", nameForCleanup, idForCleanup)
-		// }
-	})
+	t.Cleanup(func() {})
 
 	cluster.networkID = networkID
 	return cluster, nil
@@ -148,17 +144,12 @@ func (c *Cluster) RunNodes(ctx context.Context, t *testing.T, nodes []*Node) {
 }
 
 func (c *Cluster) RunSingleNode(ctx context.Context, t *testing.T, node *Node) {
-	// Use a dummy WaitGroup as RunNode expects one, though for a single node it's not strictly necessary for synchronization here.
-	var wg sync.WaitGroup
-	wg.Add(1) // Add to the counter before starting the goroutine/operation
-	go func() {
-		defer wg.Done()                     // Decrement counter when goroutine finishes
-		err := c.RunNode(ctx, t, &wg, node) // Pass wg, though RunNode doesn't use it to wait directly
-		if err != nil {
-			t.Fatalf("failed to run %s: %v", node.Alias, err)
-		}
-	}()
-	wg.Wait() // Wait for the single node to be processed by RunNode
+	// No need for goroutine when running a single node
+	var wg sync.WaitGroup // Dummy WaitGroup as RunNode expects one
+	err := c.RunNode(ctx, t, &wg, node)
+	if err != nil {
+		t.Fatalf("failed to run %s: %v", node.Alias, err)
+	}
 
 	t.Logf("Node %s is running : [%s : %s]", node.Alias, node.IPAddress, node.ContainerID)
 	time.Sleep(2 * time.Second) // Give some time for the node to fully initialize
@@ -208,15 +199,246 @@ func (c *Cluster) initNetwork(t *testing.T) (string, error) {
 		},
 	})
 	if createErr != nil {
-		// Provide context if we had issues during inspection/pre-emptive removal attempt.
-		if inspectErr == nil {
-			return "", fmt.Errorf("failed to create network %s (it existed, removal was attempted, but creation still failed): %v", c.settings.NetworkName, createErr)
-		}
 		return "", fmt.Errorf("failed to create network %s: %v", c.settings.NetworkName, createErr)
 	}
 	return resp.ID, nil
 }
 
-func (c *Cluster) dropNetwork() error {
-	return c.cli.NetworkRemove(c.ctx, c.networkID)
+// NetworkConditions defines network simulation parameters
+type NetworkConditions struct {
+	// Bandwidth limit (e.g., "1mbit", "100kbit", "10mbit", "1gbit"). Empty means no limit.
+	Bandwidth string
+	// Delay in milliseconds (e.g., 100 for 100ms delay). 0 means no delay.
+	DelayMs int
+	// Jitter in milliseconds - random variation in delay (e.g., 10 for ±10ms). 0 means no jitter.
+	JitterMs int
+	// Packet loss percentage (e.g., 10.0 for 10%). 0 means no loss.
+	LossPercent float64
+	// Packet duplication percentage (e.g., 1.0 for 1%). 0 means no duplication.
+	DuplicatePercent float64
+	// Packet corruption percentage (e.g., 0.1 for 0.1%). 0 means no corruption.
+	CorruptPercent float64
+	// Packet reordering percentage (e.g., 25 for 25%). 0 means no reordering.
+	ReorderPercent float64
+	// Gap for reordering - how many packets to delay for reordering (default: 5).
+	ReorderGap int
+}
+
+// executeSudoCommand executes a command with sudo, using password if configured
+func (c *Cluster) executeSudoCommand(args []string) error {
+	var cmd *exec.Cmd
+	var stdin bytes.Buffer
+
+	if c.settings.SudoPassword != "" {
+		// Use sudo -S to read password from stdin
+		sudoArgs := append([]string{"-S"}, args...)
+		cmd = exec.Command("sudo", sudoArgs...)
+		stdin.WriteString(c.settings.SudoPassword + "\n")
+		cmd.Stdin = &stdin
+	} else {
+		// Use sudo without password (will prompt interactively if needed)
+		cmd = exec.Command("sudo", args...)
+	}
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("sudo command failed: %v. Command: 'sudo %s'. Stderr: %s",
+			err, strings.Join(args, " "), stderr.String())
+	}
+
+	return nil
+}
+
+// ConfigureNetworkConditions configures comprehensive network conditions for a given node's container.
+// It uses 'tc' and 'netem'/'tbf' on the host system and requires sudo privileges.
+func (c *Cluster) ConfigureNetworkConditions(node *Node, conditions *NetworkConditions, containerInterfaceName string) error {
+	if node.ContainerID == "" {
+		return fmt.Errorf("node %s has no container ID, cannot configure network conditions", node.Alias)
+	}
+	if containerInterfaceName == "" {
+		containerInterfaceName = "eth0" // Default to eth0
+	}
+
+	// 1. Get ifindex of the interface inside the container
+	dockerCmd := exec.Command("docker", "exec", node.ContainerID, "cat", fmt.Sprintf("/sys/class/net/%s/ifindex", containerInterfaceName))
+	cmdOutput, err := dockerCmd.Output()
+	if err != nil {
+		errMsg := fmt.Sprintf("failed to get ifindex for %s in container %s (%s)", containerInterfaceName, node.Alias, node.ContainerID)
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return fmt.Errorf("%s: %v, stderr: %s", errMsg, err, string(exitErr.Stderr))
+		}
+		return fmt.Errorf("%s: %v", errMsg, err)
+	}
+	containerIfindexStr := strings.TrimSpace(string(cmdOutput))
+
+	// 2. Find host veth interface linked to the container's interface index
+	ipCmd := exec.Command("ip", "-o", "link")
+	cmdOutput, err = ipCmd.Output()
+	if err != nil {
+		errMsg := "failed to list host interfaces using 'ip -o link'"
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return fmt.Errorf("%s: %v, stderr: %s", errMsg, err, string(exitErr.Stderr))
+		}
+		return fmt.Errorf("%s: %v", errMsg, err)
+	}
+
+	hostVethInterface := ""
+	re := regexp.MustCompile(`^\d+:\s+([^@\s]+)@if` + regexp.QuoteMeta(containerIfindexStr) + `\b`)
+	lines := strings.Split(string(cmdOutput), "\n")
+	for _, line := range lines {
+		matches := re.FindStringSubmatch(line)
+		if len(matches) > 1 {
+			hostVethInterface = strings.TrimSpace(matches[1])
+			break
+		}
+	}
+
+	if hostVethInterface == "" {
+		return fmt.Errorf("could not find host veth interface for container %s (alias %s) with internal ifindex %s on interface %s",
+			node.ContainerID, node.Alias, containerIfindexStr, containerInterfaceName)
+	}
+
+	// 3. Clear any existing qdisc first
+	clearArgs := []string{"tc", "qdisc", "del", "dev", hostVethInterface, "root"}
+	// Ignore errors as there might not be any existing qdisc - this is normal
+	c.executeSudoCommand(clearArgs)
+
+	// 4. Configure bandwidth limitation if specified
+	if conditions.Bandwidth != "" {
+		// Use TBF (Token Bucket Filter) for bandwidth limiting
+		// Default burst and latency values that work well for most cases
+		burst := "32kbit"
+		latency := "400ms"
+
+		tbfArgs := []string{
+			"tc", "qdisc", "add", "dev", hostVethInterface, "root", "handle", "1:",
+			"tbf", "rate", conditions.Bandwidth, "burst", burst, "latency", latency,
+		}
+
+		if err := c.executeSudoCommand(tbfArgs); err != nil {
+			return fmt.Errorf("failed to configure bandwidth limit for node %s: %v", node.Alias, err)
+		}
+
+		// If we have bandwidth limiting, netem should be added as a child qdisc
+		parentHandle := "1:1"
+		netemHandle := "2:"
+
+		// Add netem as child if we have any netem parameters
+		if c.hasNetemParams(conditions) {
+			netemArgs := []string{"tc", "qdisc", "add", "dev", hostVethInterface, "parent", parentHandle, "handle", netemHandle, "netem"}
+			netemArgs = append(netemArgs, c.buildNetemParams(conditions)...)
+
+			if err := c.executeSudoCommand(netemArgs); err != nil {
+				return fmt.Errorf("failed to configure netem conditions for node %s: %v", node.Alias, err)
+			}
+		}
+	} else if c.hasNetemParams(conditions) {
+		// No bandwidth limiting, just use netem directly on root
+		netemArgs := []string{"tc", "qdisc", "add", "dev", hostVethInterface, "root", "netem"}
+		netemArgs = append(netemArgs, c.buildNetemParams(conditions)...)
+
+		println(fmt.Sprintf("Executing netem command: %s", strings.Join(netemArgs, " ")))
+		if err := c.executeSudoCommand(netemArgs); err != nil {
+			return fmt.Errorf("failed to configure netem conditions for node %s: %v", node.Alias, err)
+		}
+	}
+
+	time.Sleep(2 * time.Second) // Allow time for changes to take effect
+	return nil
+}
+
+// hasNetemParams checks if any netem parameters are specified
+func (c *Cluster) hasNetemParams(conditions *NetworkConditions) bool {
+	return conditions.DelayMs > 0 || conditions.JitterMs > 0 || conditions.LossPercent > 0 ||
+		conditions.DuplicatePercent > 0 || conditions.CorruptPercent > 0 || conditions.ReorderPercent > 0
+}
+
+// buildNetemParams builds the netem parameter list from NetworkConditions
+func (c *Cluster) buildNetemParams(conditions *NetworkConditions) []string {
+	var params []string
+
+	// Add delay and jitter
+	if conditions.DelayMs > 0 {
+		if conditions.JitterMs > 0 {
+			params = append(params, "delay", fmt.Sprintf("%dms", conditions.DelayMs), fmt.Sprintf("%dms", conditions.JitterMs))
+		} else {
+			params = append(params, "delay", fmt.Sprintf("%dms", conditions.DelayMs))
+		}
+	}
+
+	// Add packet loss
+	if conditions.LossPercent > 0 {
+		params = append(params, "loss", fmt.Sprintf("%.2f%%", conditions.LossPercent))
+	}
+
+	// Add packet duplication
+	if conditions.DuplicatePercent > 0 {
+		params = append(params, "duplicate", fmt.Sprintf("%.2f%%", conditions.DuplicatePercent))
+	}
+
+	// Add packet corruption
+	if conditions.CorruptPercent > 0 {
+		params = append(params, "corrupt", fmt.Sprintf("%.2f%%", conditions.CorruptPercent))
+	}
+
+	// Add packet reordering
+	if conditions.ReorderPercent > 0 {
+		gap := conditions.ReorderGap
+		if gap <= 0 {
+			gap = 5 // Default gap
+		}
+		params = append(params, "reorder", fmt.Sprintf("%.0f%%", conditions.ReorderPercent), "gap", fmt.Sprintf("%d", gap))
+	}
+
+	return params
+}
+
+// RemoveNetworkConditions removes all network condition configurations for a node
+func (c *Cluster) RemoveNetworkConditions(node *Node, containerInterfaceName string) error {
+	if node.ContainerID == "" {
+		return fmt.Errorf("node %s has no container ID, cannot remove network conditions", node.Alias)
+	}
+	if containerInterfaceName == "" {
+		containerInterfaceName = "eth0"
+	}
+
+	// Get the host veth interface (reusing the same logic as in ConfigureNetworkConditions)
+	dockerCmd := exec.Command("docker", "exec", node.ContainerID, "cat", fmt.Sprintf("/sys/class/net/%s/ifindex", containerInterfaceName))
+	cmdOutput, err := dockerCmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to get ifindex for %s in container %s: %v", containerInterfaceName, node.Alias, err)
+	}
+	containerIfindexStr := strings.TrimSpace(string(cmdOutput))
+
+	ipCmd := exec.Command("ip", "-o", "link")
+	cmdOutput, err = ipCmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to list host interfaces: %v", err)
+	}
+
+	hostVethInterface := ""
+	re := regexp.MustCompile(`^\d+:\s+([^@\s]+)@if` + regexp.QuoteMeta(containerIfindexStr) + `\b`)
+	lines := strings.Split(string(cmdOutput), "\n")
+	for _, line := range lines {
+		matches := re.FindStringSubmatch(line)
+		if len(matches) > 1 {
+			hostVethInterface = strings.TrimSpace(matches[1])
+			break
+		}
+	}
+
+	if hostVethInterface == "" {
+		return fmt.Errorf("could not find host veth interface for container %s", node.ContainerID)
+	}
+
+	// Remove all qdisc rules
+	clearArgs := []string{"tc", "qdisc", "del", "dev", hostVethInterface, "root"}
+	if err := c.executeSudoCommand(clearArgs); err != nil {
+		// It's okay if this fails - there might not be any rules configured
+		return nil
+	}
+
+	return nil
 }

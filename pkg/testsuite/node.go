@@ -49,15 +49,16 @@ const (
 	ObservingCntSecondsPerBlock   = 20
 
 	// Test Flags for SetTestingSLFlag (derived from Python test_trustlines_open.py)
-	TrustLineDebugFlagRejectNewRequestRace           uint32 = 4       // Corresponds to Python's usage of 4 in set_TL_debug_flag for rejecting new requests during trustline operations. The specific meaning (request vs audit) is often contextual to the message type it's paired with.
-	TrustLineDebugFlagRejectNewAuditRace             uint32 = 4       // Also uses 4, context via message type. Python used same numeric flag for different semantic meanings.
-	TestFlagExceptionOnInitTAModifyingStage          uint32 = 2048    // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_MODIFYING_STAGE_EXCEPTION
-	TestFlagExceptionOnInitTAResponseProcessingStage uint32 = 4096    // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_RESPONSE_PROCESSING_STAGE_EXCEPTION
-	TestFlagExceptionOnInitTAResumingStage           uint32 = 8192    // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_RESUMING_STAGE_EXCEPTION
-	TestFlagExceptionOnContractorTAStage             uint32 = 16384   // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_CONTRACTOR_TA_STAGE_EXCEPTION
-	TestFlagTerminateOnInitTAModifyingStage          uint32 = 2097152 // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_MODIFYING_STAGE_TERMINATE
-	TestFlagTerminateOnInitTAResponseProcessingStage uint32 = 4194304 // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_RESPONSE_PROCESSING_STAGE_TERMINATE
-	TestFlagTerminateOnInitTAResumingStage           uint32 = 8388608 // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_RESUMING_STAGE_TERMINATE
+	TrustLineDebugFlagRejectNewRequestRace           uint32 = 4        // Corresponds to Python's usage of 4 in set_TL_debug_flag for rejecting new requests during trustline operations. The specific meaning (request vs audit) is often contextual to the message type it's paired with.
+	TrustLineDebugFlagRejectNewAuditRace             uint32 = 4        // Also uses 4, context via message type. Python used same numeric flag for different semantic meanings.
+	TestFlagExceptionOnInitTAModifyingStage          uint32 = 2048     // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_MODIFYING_STAGE_EXCEPTION
+	TestFlagExceptionOnInitTAResponseProcessingStage uint32 = 4096     // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_RESPONSE_PROCESSING_STAGE_EXCEPTION
+	TestFlagExceptionOnInitTAResumingStage           uint32 = 8192     // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_RESUMING_STAGE_EXCEPTION
+	TestFlagExceptionOnContractorTAStage             uint32 = 16384    // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_CONTRACTOR_TA_STAGE_EXCEPTION
+	TestFlagTerminateOnInitTAModifyingStage          uint32 = 2097152  // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_MODIFYING_STAGE_TERMINATE
+	TestFlagTerminateOnInitTAResponseProcessingStage uint32 = 4194304  // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_RESPONSE_PROCESSING_STAGE_TERMINATE
+	TestFlagTerminateOnInitTAResumingStage           uint32 = 8388608  // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_RESUMING_STAGE_TERMINATE
+	TestFlagTerminateOnContractorTAStage             uint32 = 16777216 // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_CONTRACTOR_TA_STAGE_TERMINATE
 
 	// Message types/codes for SetTestingSLFlag firstParam (derived from Python)
 	// These typically correspond to transaction types or message identifiers used in debug flags.
@@ -78,10 +79,13 @@ const (
 	SettlementLinePublicKeyResponseMessageType = "105" // Python: self.publicKeyResponseMessage (also targetTransactionType for these tests)
 
 	// Default values inspired by Python test suite
-	DefaultKeysCount                    = 20
-	DefaultWaitingResponseTime          = 20 * time.Second
-	DefaultMaxMessageSendingAttemptsStr = "3" // As string for SetTestingSLFlag
-	DefaultMaxMessageSendingAttemptsInt = 3
+	DefaultKeysCount                      = 20
+	DefaultCriticalKeysCount              = 2
+	DefaultKeysSharingSeconds             = 3
+	DefaultKeysSharingWaitingResponseTime = 20 // From Python test suite keysSharingWaitingResponseTime
+	DefaultWaitingResponseTime            = 20 * time.Second
+	DefaultMaxMessageSendingAttemptsStr   = "3" // As string for SetTestingSLFlag
+	DefaultMaxMessageSendingAttemptsInt   = 3
 
 	// Log Messages
 	LogMessageRecoveringLogMessage = "runVotesRecoveryParentStage"
@@ -448,6 +452,13 @@ func (n *Node) CreateSettlementLineAndCheck(t *testing.T, targetNode *Node, equi
 	targetNode.CheckActiveSettlementLine(t, n, equivalent, "0", amount, "0")
 }
 
+func (n *Node) SetSettlementLineAndCheck(t *testing.T, targetNode *Node, equivalent string, amount string) {
+	n.SetSettlementLine(t, targetNode, equivalent, amount)
+	time.Sleep(500 * time.Millisecond)
+	n.CheckActiveSettlementLine(t, targetNode, equivalent, amount, "0", "0")
+	targetNode.CheckActiveSettlementLine(t, n, equivalent, "0", amount, "0")
+}
+
 func (n *Node) CreateChannelAndSettlementLineAndCheck(t *testing.T, targetNode *Node, equivalent string, amount string) {
 	n.OpenChannelAndCheck(t, targetNode)
 	n.CreateSettlementLineAndCheck(t, targetNode, equivalent, amount)
@@ -539,6 +550,33 @@ func CheckSettlementLineForSyncBatch(t *testing.T, nodes []*Node, equivalent str
 			println(fmt.Sprintf("check target node for batch sync: %s", targetNode.Alias))
 			node.CheckSettlementLineForSync(t, targetNode, equivalent)
 		}
+	}
+}
+
+func (n *Node) SettlementLineKeysSharing(t *testing.T, targetNode *Node, equivalent string) {
+	// Step 1: Get contractor_id (channel_id) for the target node
+	channelInfo, err := n.GetChannelInfo(targetNode)
+	if err != nil {
+		t.Fatalf("failed to get channel info: %v", err)
+	}
+	contractorID := channelInfo.ChannelID
+
+	// Step 2: Set keys sharing (PUT)
+	setURL := fmt.Sprintf("http://%s:%d/api/v1/node/contractors/%s/keys-sharing/%s/",
+		n.IPAddress, n.CLIPort, contractorID, equivalent)
+	request, err := http.NewRequest(http.MethodPut, setURL, nil)
+	if err != nil {
+		t.Fatalf("failed to create keys-sharing request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	setResp, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("failed to send keys-sharing request: %v", err)
+	}
+	defer setResp.Body.Close()
+	if setResp.StatusCode != http.StatusOK {
+		t.Fatalf("keys-sharing request failed with status: %d", setResp.StatusCode)
 	}
 }
 
@@ -1151,5 +1189,37 @@ func (n *Node) CheckNodeForLogMessage(t *testing.T, transactionUUID string, mess
 		t.Fatalf("Node %s: Expected to find log message '%s' (UUID: '%s'), but did not. Grep output: %s", n.Alias, message, transactionUUID, trimmedOutput)
 	} else if !expectedToFind && found {
 		t.Fatalf("Node %s: Expected NOT to find log message '%s' (UUID: '%s'), but did. Grep output: %s", n.Alias, message, transactionUUID, trimmedOutput)
+	}
+}
+
+// CheckSettlementLineKeysPresence checks if both own keys and contractor keys are present for a settlement line between two nodes.
+// isOwnKeysPresent and isContractorKeysPresent indicate the expected presence state of the keys.
+func (n *Node) CheckSettlementLineKeysPresence(t *testing.T, targetNode *Node, isOwnKeysPresent bool, isContractorKeysPresent bool) {
+	settlementLineInfo, statusCode, err := n.GetSettlementsLineInfoByAddress(targetNode, "1")
+	if err != nil {
+		t.Fatalf("Node %s: Failed to get settlement line info: %v", n.Alias, err)
+	}
+	if statusCode != http.StatusOK {
+		t.Fatalf("Node %s: Request failed with status code: %d", n.Alias, statusCode)
+	}
+
+	expectedOwnKeysPresent := SettlementLineKeysPresent
+	if !isOwnKeysPresent {
+		expectedOwnKeysPresent = SettlementLineKeysAbsent
+	}
+
+	expectedContractorKeysPresent := SettlementLineKeysPresent
+	if !isContractorKeysPresent {
+		expectedContractorKeysPresent = SettlementLineKeysAbsent
+	}
+
+	if settlementLineInfo.OwnKeysPresent != expectedOwnKeysPresent {
+		t.Fatalf("Node %s: Own keys presence mismatch. Expected: %s, Got: %s",
+			n.Alias, expectedOwnKeysPresent, settlementLineInfo.OwnKeysPresent)
+	}
+
+	if settlementLineInfo.ContractorKeysPresent != expectedContractorKeysPresent {
+		t.Fatalf("Node %s: Contractor keys presence mismatch. Expected: %s, Got: %s",
+			n.Alias, expectedContractorKeysPresent, settlementLineInfo.ContractorKeysPresent)
 	}
 }
