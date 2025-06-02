@@ -26,7 +26,7 @@ func TestTrustLineSet(t *testing.T) {
 
 	equivalent := "1001"
 	maxPositiveBalance := 100000000
-	nodeA.CreateSettlementLineAndCheck(t, nodeB, equivalent, strconv.Itoa(maxPositiveBalance))
+	nodeA.CreateAndSetSettlementLineAndCheck(t, nodeB, equivalent, strconv.Itoa(maxPositiveBalance))
 
 	nodeA.CheckSettlementLineForSync(t, nodeB, equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, equivalent)

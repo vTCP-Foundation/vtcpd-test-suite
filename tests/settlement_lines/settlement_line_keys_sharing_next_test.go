@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"testing"
 	"time"
 
@@ -37,7 +36,7 @@ func setupNodesForKeysSharingNextSettlementLineTest(t *testing.T, count int) ([]
 	cluster.RunNodes(ctx, t, nodes)
 
 	nodes[0].OpenChannelAndCheck(t, nodes[1])
-	nodes[1].CreateSettlementLineAndCheck(t, nodes[0], testconfig.Equivalent, "2000")
+	nodes[1].CreateAndSetSettlementLineAndCheck(t, nodes[0], testconfig.Equivalent, "2000")
 	nodes[0].SetSettlementLineAndCheck(t, nodes[1], testconfig.Equivalent, "1000")
 
 	for x := 0; x < vtcp.DefaultKeysCount-vtcp.DefaultCriticalKeysCount-4; x++ {
@@ -70,7 +69,7 @@ func TestSettlementLineKeysSharingByPaymentOnIntermediateNode(t *testing.T) {
 	nodeA, nodeB, nodeC := nodes[0], nodes[1], nodes[2]
 
 	nodeA.OpenChannelAndCheck(t, nodeC)
-	nodeA.CreateSettlementLineAndCheck(t, nodeC, testconfig.Equivalent, "1000")
+	nodeA.CreateAndSetSettlementLineAndCheck(t, nodeC, testconfig.Equivalent, "1000")
 
 	nodeC.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
 	time.Sleep(vtcp.DefaultKeysSharingSeconds * time.Second)
@@ -98,7 +97,7 @@ func TestSettlementLineKeysSharingByModifyingAsInitiator(t *testing.T) {
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "500")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "500", vtcp.StatusOK)
 	time.Sleep(vtcp.DefaultKeysSharingSeconds * time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -115,7 +114,7 @@ func TestSettlementLineKeysSharingByModifyingAsContractor(t *testing.T) {
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeB.SetSettlementLine(t, nodeA, testconfig.Equivalent, "500")
+	nodeB.SetSettlementLine(t, nodeA, testconfig.Equivalent, "500", vtcp.StatusOK)
 	time.Sleep(vtcp.DefaultKeysSharingSeconds * time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -129,12 +128,10 @@ func TestSettlementLineKeysSharingByModifyingAsContractor(t *testing.T) {
 }
 
 func TestSettlementLineKeysSharingByClosingIncomingAsInitiator(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingTrustline(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(vtcp.DefaultKeysSharingSeconds * time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -148,12 +145,10 @@ func TestSettlementLineKeysSharingByClosingIncomingAsInitiator(t *testing.T) {
 }
 
 func TestSettlementLineKeysSharingByClosingIncomingAsContractor(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeB.CloseIncomingTrustline(t, nodeA)
+	nodeB.CloseMaxNegativeBalance(t, nodeA, testconfig.Equivalent)
 	time.Sleep(vtcp.DefaultKeysSharingSeconds * time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -176,7 +171,7 @@ func TestSettlementLineKeysSharingByModificationLostInitKeyMessage(t *testing.T)
 	}
 	time.Sleep(time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(vtcp.DefaultKeysSharingWaitingResponseTime*time.Second + vtcp.DefaultKeysSharingSeconds*time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -190,7 +185,6 @@ func TestSettlementLineKeysSharingByModificationLostInitKeyMessage(t *testing.T)
 }
 
 func TestSettlementLineKeysSharingByClosingLostInitKeyMessage(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
@@ -200,8 +194,7 @@ func TestSettlementLineKeysSharingByClosingLostInitKeyMessage(t *testing.T) {
 	}
 	time.Sleep(time.Second)
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingTrustline(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(vtcp.DefaultKeysSharingWaitingResponseTime*time.Second + vtcp.DefaultKeysSharingSeconds*time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -247,7 +240,7 @@ func TestSettlementLineKeysSharingByModificationLostInitKeyMessageWithTASleeping
 	}
 	time.Sleep(time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(time.Duration(vtcp.DefaultMaxMessageSendingAttemptsInt)*vtcp.DefaultKeysSharingWaitingResponseTime*time.Second + vtcp.DefaultKeysSharingSeconds*time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -261,7 +254,6 @@ func TestSettlementLineKeysSharingByModificationLostInitKeyMessageWithTASleeping
 }
 
 func TestSettlementLineKeysSharingByClosingLostInitKeyMessageWithTASleeping(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
@@ -271,8 +263,7 @@ func TestSettlementLineKeysSharingByClosingLostInitKeyMessageWithTASleeping(t *t
 	}
 	time.Sleep(time.Second)
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingTrustline(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(time.Duration(vtcp.DefaultMaxMessageSendingAttemptsInt)*vtcp.DefaultKeysSharingWaitingResponseTime*time.Second + vtcp.DefaultKeysSharingSeconds*time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -318,7 +309,7 @@ func TestSettlementLineKeysSharingByModificationLostKeyMessage(t *testing.T) {
 	}
 	time.Sleep(time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(vtcp.DefaultKeysSharingWaitingResponseTime*time.Second + vtcp.DefaultKeysSharingSeconds*time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -332,7 +323,6 @@ func TestSettlementLineKeysSharingByModificationLostKeyMessage(t *testing.T) {
 }
 
 func TestSettlementLineKeysSharingByClosingLostKeyMessage(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
@@ -342,8 +332,7 @@ func TestSettlementLineKeysSharingByClosingLostKeyMessage(t *testing.T) {
 	}
 	time.Sleep(time.Second)
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingTrustline(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(vtcp.DefaultKeysSharingWaitingResponseTime*time.Second + vtcp.DefaultKeysSharingSeconds*time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -389,7 +378,7 @@ func TestSettlementLineKeysSharingByModificationLostKeyMessageWithTASleeping(t *
 	}
 	time.Sleep(time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(time.Duration(vtcp.DefaultMaxMessageSendingAttemptsInt)*vtcp.DefaultKeysSharingWaitingResponseTime*time.Second + vtcp.DefaultKeysSharingSeconds*time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -403,7 +392,6 @@ func TestSettlementLineKeysSharingByModificationLostKeyMessageWithTASleeping(t *
 }
 
 func TestSettlementLineKeysSharingByClosingLostKeyMessageWithTASleeping(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
@@ -413,8 +401,7 @@ func TestSettlementLineKeysSharingByClosingLostKeyMessageWithTASleeping(t *testi
 	}
 	time.Sleep(time.Second)
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingTrustline(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(time.Duration(vtcp.DefaultMaxMessageSendingAttemptsInt)*vtcp.DefaultKeysSharingWaitingResponseTime*time.Second + vtcp.DefaultKeysSharingSeconds*time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -437,7 +424,7 @@ func TestSettlementLineKeysSharingByModificationLostHashConfirmationMessage(t *t
 	}
 	time.Sleep(time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(vtcp.DefaultKeysSharingWaitingResponseTime*time.Second + vtcp.DefaultKeysSharingSeconds*time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -451,7 +438,6 @@ func TestSettlementLineKeysSharingByModificationLostHashConfirmationMessage(t *t
 }
 
 func TestSettlementLineKeysSharingByClosingLostHashConfirmationMessage(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
@@ -461,8 +447,7 @@ func TestSettlementLineKeysSharingByClosingLostHashConfirmationMessage(t *testin
 	}
 	time.Sleep(1 * time.Second)
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(vtcp.DefaultKeysSharingWaitingResponseTime*time.Second + vtcp.DefaultKeysSharingSeconds*time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -499,7 +484,6 @@ func TestSettlementLineKeysSharingByPaymentLostHashConfirmationMessage(t *testin
 }
 
 func TestSettlementLineKeysSharingByClosingLostHashConfirmationMessageWithTASleeping(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
@@ -509,8 +493,7 @@ func TestSettlementLineKeysSharingByClosingLostHashConfirmationMessageWithTASlee
 	}
 	time.Sleep(1 * time.Second)
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(time.Duration(vtcp.DefaultMaxMessageSendingAttemptsInt)*vtcp.DefaultKeysSharingWaitingResponseTime*time.Second + vtcp.DefaultKeysSharingSeconds*time.Second)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -550,13 +533,13 @@ func TestSettlementLineKeysSharingByModificationIOExceptionOnInitiatorSendFirstK
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0") // IO Exception
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "2", "0") // IO Exception
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(60 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
@@ -568,13 +551,13 @@ func TestSettlementLineKeysSharingByModificationExceptionOnInitiatorSendFirstKey
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(60 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
@@ -583,18 +566,16 @@ func TestSettlementLineKeysSharingByModificationExceptionOnInitiatorSendFirstKey
 }
 
 func TestSettlementLineKeysSharingByClosingIOExceptionOnInitiatorSendFirstKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0") // IO Exception
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "2", "0") // IO Exception
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(60 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
@@ -603,18 +584,16 @@ func TestSettlementLineKeysSharingByClosingIOExceptionOnInitiatorSendFirstKey(t 
 }
 
 func TestSettlementLineKeysSharingByClosingExceptionOnInitiatorSendFirstKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(60 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
@@ -626,7 +605,7 @@ func TestSettlementLineKeysSharingByPaymentIOExceptionOnInitiatorSendFirstKey(t 
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0") // IO Exception
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "2", "0") // IO Exception
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -644,7 +623,7 @@ func TestSettlementLineKeysSharingByPaymentExceptionOnInitiatorSendFirstKey(t *t
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -662,7 +641,7 @@ func TestSettlementLineKeysSharingByModificationIOExceptionOnContractorReceiveKe
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0") // IO Exception
+	err := nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionVote, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0") // IO Exception
 	if err != nil {
 		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
 	}
@@ -680,7 +659,7 @@ func TestSettlementLineKeysSharingByModificationExceptionOnContractorReceiveKey(
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
+	err := nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionVote, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
 	}
@@ -695,18 +674,16 @@ func TestSettlementLineKeysSharingByModificationExceptionOnContractorReceiveKey(
 }
 
 func TestSettlementLineKeysSharingByClosingIOExceptionOnContractorReceiveKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0") // IO Exception
+	err := nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionVote, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0") // IO Exception
 	if err != nil {
 		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(60 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
@@ -715,18 +692,16 @@ func TestSettlementLineKeysSharingByClosingIOExceptionOnContractorReceiveKey(t *
 }
 
 func TestSettlementLineKeysSharingByClosingExceptionOnContractorReceiveKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
+	err := nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionVote, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(60 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
@@ -738,13 +713,13 @@ func TestSettlementLineKeysSharingByModificationTerminateOnInitiatorSendNextKey(
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(160 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
@@ -760,13 +735,13 @@ func TestSettlementLineKeysSharingByModificationTerminateAfterInitiatorSendNextK
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(160 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
@@ -779,18 +754,16 @@ func TestSettlementLineKeysSharingByModificationTerminateAfterInitiatorSendNextK
 }
 
 func TestSettlementLineKeysSharingByClosingTerminateOnInitiatorSendNextKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(160 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
@@ -803,18 +776,16 @@ func TestSettlementLineKeysSharingByClosingTerminateOnInitiatorSendNextKey(t *te
 }
 
 func TestSettlementLineKeysSharingByClosingTerminateAfterInitiatorSendNextKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
+	nodeA.CloseMaxNegativeBalance(t, nodeB, testconfig.Equivalent)
 	time.Sleep(160 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
@@ -830,7 +801,7 @@ func TestSettlementLineKeysSharingByPaymentTerminateOnInitiatorSendNextKey(t *te
 	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -846,808 +817,4 @@ func TestSettlementLineKeysSharingByPaymentTerminateOnInitiatorSendNextKey(t *te
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
 	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByPaymentTerminateAfterInitiatorSendNextKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByModificationTerminateOnInitiatorReceiveNextKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResponseProcessingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByModificationTerminateAfterInitiatorReceiveNextKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResponseProcessingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByClosingTerminateOnInitiatorReceiveNextKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResponseProcessingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByClosingTerminateAfterInitiatorReceiveNextKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResponseProcessingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByPaymentTerminateOnInitiatorReceiveNextKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResponseProcessingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByPaymentTerminateAfterInitiatorReceiveNextKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResponseProcessingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByModificationTerminateOnInitiatorResumeNextKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResumingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByModificationTerminateAfterInitiatorResumeNextKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResumingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByClosingTerminateOnInitiatorResumeNextKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResumingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByClosingTerminateAfterInitiatorResumeNextKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResumingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByPaymentTerminateOnInitiatorResumeNextKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResumingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByPaymentTerminateAfterInitiatorResumeNextKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResumingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
-	time.Sleep(160 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByModificationExceptionOnContractorSendKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByClosingExceptionOnContractorSendKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByPaymentExceptionOnContractorSendKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingBothParticipants(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	for x := 0; x < vtcp.DefaultKeysCount-vtcp.DefaultCriticalKeysCount-4; x++ {
-		nodeB.CreateTransactionCheckStatus(t, nodeA, testconfig.Equivalent, "50", vtcp.StatusOK)
-		time.Sleep(3 * time.Second)
-	}
-
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
-	time.Sleep(vtcp.DefaultKeysSharingSeconds * time.Second)
-
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
-	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount-2)
-}
-
-func TestSettlementLineKeysSharingSeveralTrustLines(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 4)
-	node1, node2, node3, node4 := nodes[0], nodes[1], nodes[2], nodes[3]
-
-	node1.OpenChannelAndCheck(t, node2)
-	node4.OpenChannelAndCheck(t, node2)
-	node1.OpenChannelAndCheck(t, node3)
-	node4.OpenChannelAndCheck(t, node3)
-
-	node2.SetSettlementLineAndCheck(t, node1, testconfig.Equivalent, "1000")
-	node4.SetSettlementLineAndCheck(t, node2, testconfig.Equivalent, "2000")
-	node3.SetSettlementLineAndCheck(t, node1, testconfig.Equivalent, "1000")
-	node4.SetSettlementLineAndCheck(t, node3, testconfig.Equivalent, "2000")
-	time.Sleep(3 * time.Second)
-
-	for x := 0; x < vtcp.DefaultKeysCount-vtcp.DefaultCriticalKeysCount-4; x++ {
-		node1.CreateTransactionCheckStatus(t, node2, testconfig.Equivalent, "50", vtcp.StatusOK)
-		time.Sleep(3 * time.Second)
-		node2.CreateTransactionCheckStatus(t, node4, testconfig.Equivalent, "50", vtcp.StatusOK)
-		time.Sleep(3 * time.Second)
-		node1.CreateTransactionCheckStatus(t, node3, testconfig.Equivalent, "50", vtcp.StatusOK)
-		time.Sleep(3 * time.Second)
-		node3.CreateTransactionCheckStatus(t, node4, testconfig.Equivalent, "50", vtcp.StatusOK)
-		time.Sleep(3 * time.Second)
-	}
-	time.Sleep(10 * time.Second)
-
-	outgoingPaymentAmount := (vtcp.DefaultKeysCount - vtcp.DefaultCriticalKeysCount - 2) * 2 * 50
-	freePaymentAmount := 2000 - outgoingPaymentAmount
-	node1.CreateTransactionCheckStatus(t, node4, testconfig.Equivalent, strconv.Itoa(freePaymentAmount), vtcp.StatusOK)
-	time.Sleep(vtcp.DefaultKeysSharingSeconds * time.Second)
-
-	node4.CheckMaxFlow(t, node1, testconfig.Equivalent, "2000")
-	node1.CheckSerializedTransaction(t, false, 0)
-	node2.CheckSerializedTransaction(t, false, 0)
-	node3.CheckSerializedTransaction(t, false, 0)
-	node4.CheckSerializedTransaction(t, false, 0)
-
-	node1.CheckSettlementLineState(t, node2, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	node1.CheckSettlementLineState(t, node3, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	node2.CheckSettlementLineState(t, node4, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	node3.CheckSettlementLineState(t, node4, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-
-	node1.CheckSettlementLineKeysPresence(t, node2, true, true)
-	node2.CheckSettlementLineKeysPresence(t, node1, true, true)
-	node1.CheckSettlementLineKeysPresence(t, node3, true, true)
-	node3.CheckSettlementLineKeysPresence(t, node1, true, true)
-	node2.CheckSettlementLineKeysPresence(t, node4, true, true)
-	node4.CheckSettlementLineKeysPresence(t, node2, true, true)
-	node3.CheckSettlementLineKeysPresence(t, node4, true, true)
-	node4.CheckSettlementLineKeysPresence(t, node3, true, true)
-
-	node1.CheckValidKeys(t, vtcp.DefaultKeysCount*2, vtcp.DefaultKeysCount*2-2)
-	node2.CheckValidKeys(t, vtcp.DefaultKeysCount*2-1, vtcp.DefaultKeysCount*2-1)
-	node3.CheckValidKeys(t, vtcp.DefaultKeysCount*2-1, vtcp.DefaultKeysCount*2-1)
-	node4.CheckValidKeys(t, vtcp.DefaultKeysCount*2-2, vtcp.DefaultKeysCount*2)
-}
-
-func TestSettlementLineKeysSharingByModificationTerminateOnContractorSendKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByClosingTerminateOnContractorSendKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByPaymentTerminateOnContractorSendKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByModificationTerminateAfterContractorSendKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByClosingTerminateAfterContractorSendKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByPaymentTerminateAfterContractorSendKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByModificationTerminateOnContractorReceiveKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByClosingTerminateOnContractorReceiveKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByPaymentTerminateOnContractorReceiveKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByModificationTerminateAfterContractorReceiveKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByClosingTerminateAfterContractorReceiveKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByPaymentTerminateAfterContractorReceiveKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByModificationTerminateOnContractorResumeKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByClosingTerminateOnContractorResumeKey(t *testing.T) {
-	t.Skip("TODO: Implement close_incoming_trustline functionality")
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	// TODO: Implement close_incoming_trustline functionality
-	// nodeA.CloseIncomingSettlementLine(t, nodeB)
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByPaymentTerminateOnContractorResumeKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
-}
-
-func TestSettlementLineKeysSharingByModificationTerminateAfterContractorResumeKey(t *testing.T) {
-	nodes, _ := setupNodesForKeysSharingNextSettlementLineTest(t, 2)
-	nodeA, nodeB := nodes[0], nodes[1]
-
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagTerminateOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0")
-	if err != nil {
-		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
-	}
-	time.Sleep(1 * time.Second)
-
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
-	time.Sleep(60 * time.Second)
-
-	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "0")
-	nodeA.CheckSerializedTransaction(t, false, 0)
-	nodeB.CheckSerializedTransaction(t, false, 0)
-	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
 }

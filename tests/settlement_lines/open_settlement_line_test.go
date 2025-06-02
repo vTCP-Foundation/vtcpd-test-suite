@@ -293,7 +293,7 @@ func TestSettlementLineOpenExceptionOnInitModifyingStage(t *testing.T) {
 
 	nodeA.OpenChannelAndCheck(t, nodeB)
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLineSourceTransactionType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLineSourceTransactionType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -321,7 +321,7 @@ func TestSettlementLineOpenIOExceptionOnInitModifyingStage(t *testing.T) {
 
 	nodeA.OpenChannelAndCheck(t, nodeB)
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLineSourceTransactionType, "2", "0") // secondParam="2" for IO exception
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLineSourceTransactionType, "2", "0") // secondParam="2" for IO exception
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -352,7 +352,7 @@ func TestSettlementLineOpenExceptionOnInitResponseProcessingStage(t *testing.T) 
 
 	nodeA.OpenChannelAndCheck(t, nodeB)
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAResponseProcessingStage, vtcp.SettlementLineSourceTransactionType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionNextNeighborResponse, vtcp.SettlementLineSourceTransactionType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -380,7 +380,7 @@ func TestSettlementLineOpenIOExceptionOnInitResponseProcessingStage(t *testing.T
 
 	nodeA.OpenChannelAndCheck(t, nodeB)
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAResponseProcessingStage, vtcp.SettlementLineSourceTransactionType, "2", "0") // IO Exception
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionNextNeighborResponse, vtcp.SettlementLineSourceTransactionType, "2", "0") // IO Exception
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -420,7 +420,7 @@ func TestSettlementLineOpenExceptionOnInitResumingStage(t *testing.T) {
 	time.Sleep(resumeWaitTime)
 
 	// Set exception flag on NodeA for resuming stage
-	err = nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAResumingStage, vtcp.SettlementLineSourceTransactionType, "1", "0")
+	err = nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionNextNeighborResponse, vtcp.SettlementLineSourceTransactionType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag for resuming exception: %v", err)
 	}
@@ -454,7 +454,7 @@ func TestSettlementLineOpenIOExceptionOnInitResumingStage(t *testing.T) {
 	resumeWaitTime := vtcp.DefaultWaitingResponseTime*time.Duration(vtcp.DefaultMaxMessageSendingAttemptsInt-1) + 5*time.Second
 	time.Sleep(resumeWaitTime)
 
-	err = nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAResumingStage, vtcp.SettlementLineSourceTransactionType, "2", "0") // IO Exception
+	err = nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionNextNeighborResponse, vtcp.SettlementLineSourceTransactionType, "2", "0") // IO Exception
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag for resuming IO exception: %v", err)
 	}
@@ -478,7 +478,7 @@ func TestSettlementLineOpenExceptionOnContractorStage(t *testing.T) {
 	nodeA.OpenChannelAndCheck(t, nodeB)
 
 	// Python test uses self.targetTransactionType which is 101 (SettlementLineStandardMessageType)
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLineStandardMessageType, "1", "0")
+	err := nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionVote, vtcp.SettlementLineStandardMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
 	}
@@ -506,7 +506,7 @@ func TestSettlementLineOpenIOExceptionOnContractorStage(t *testing.T) {
 
 	nodeA.OpenChannelAndCheck(t, nodeB)
 
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLineStandardMessageType, "2", "0") // IO Exception
+	err := nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionVote, vtcp.SettlementLineStandardMessageType, "2", "0") // IO Exception
 	if err != nil {
 		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
 	}
@@ -532,7 +532,7 @@ func TestSettlementLineOpenTerminateOnInitModifyingStage(t *testing.T) {
 
 	nodeA.OpenChannelAndCheck(t, nodeB)
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAModifyingStage, vtcp.SettlementLineSourceTransactionType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, vtcp.SettlementLineSourceTransactionType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -560,7 +560,7 @@ func TestSettlementLineOpenTerminateOnInitModifyingStage(t *testing.T) {
 
 // Corresponds to test_trustlines_open_terminate_after_initiator_modifying_stage
 // Note: In python, this test is identical to test_trustlines_open_terminate_on_initiator_modifying_stage.
-// The flag TestFlagTerminateOnInitTAModifyingStage with secondParam="1" likely covers both "on" and "after" due to how termination is handled.
+// The flag FlagTerminateProcessPreviousNeighborRequest with secondParam="1" likely covers both "on" and "after" due to how termination is handled.
 // Replicating the test logic as is.
 func TestSettlementLineOpenTerminateAfterInitModifyingStage(t *testing.T) {
 	nodes, _ := setupNodesForOpenSettlementLineTest(t, 2)
@@ -568,7 +568,7 @@ func TestSettlementLineOpenTerminateAfterInitModifyingStage(t *testing.T) {
 
 	nodeA.OpenChannelAndCheck(t, nodeB)
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAModifyingStage, vtcp.SettlementLineSourceTransactionType, "1", "0") // Same flag as "on" stage
+	err := nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, vtcp.SettlementLineSourceTransactionType, "1", "0") // Same flag as "on" stage
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -594,7 +594,7 @@ func TestSettlementLineOpenTerminateOnInitResponseProcessingStage(t *testing.T) 
 
 	nodeA.OpenChannelAndCheck(t, nodeB)
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResponseProcessingStage, vtcp.SettlementLineSourceTransactionType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionCoordinatorRequest, vtcp.SettlementLineSourceTransactionType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -624,7 +624,7 @@ func TestSettlementLineOpenTerminateAfterInitResponseProcessingStage(t *testing.
 
 	nodeA.OpenChannelAndCheck(t, nodeB)
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResponseProcessingStage, vtcp.SettlementLineSourceTransactionType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionCoordinatorRequest, vtcp.SettlementLineSourceTransactionType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -664,7 +664,7 @@ func TestSettlementLineOpenTerminateOnInitResumingStage(t *testing.T) {
 	// Adding a small delay to allow initial messages before setting termination on resume.
 	time.Sleep(vtcp.DefaultWaitingResponseTime*time.Duration(vtcp.DefaultMaxMessageSendingAttemptsInt-1) + 5*time.Second)
 
-	err = nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResumingStage, vtcp.SettlementLineSourceTransactionType, "1", "0") // param "1"
+	err = nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionNextNeighborResponse, vtcp.SettlementLineSourceTransactionType, "1", "0") // param "1"
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag for resuming termination: %v", err)
 	}
@@ -696,7 +696,7 @@ func TestSettlementLineOpenTerminateAfterInitResumingStage(t *testing.T) {
 	nodeA.CreateSettlementLine(t, nodeB, testconfig.Equivalent)
 	time.Sleep(vtcp.DefaultWaitingResponseTime*time.Duration(vtcp.DefaultMaxMessageSendingAttemptsInt-1) + 5*time.Second)
 
-	err = nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResumingStage, vtcp.SettlementLineSourceTransactionType, "2", "0") // Python uses param "2"
+	err = nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionNextNeighborResponse, vtcp.SettlementLineSourceTransactionType, "2", "0") // Python uses param "2"
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag for resuming termination: %v", err)
 	}

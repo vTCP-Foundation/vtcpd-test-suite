@@ -336,6 +336,7 @@ func TestOpenSettlementLine10PercentPacketReorderingInitiatorNode(t *testing.T) 
 	// Configure network conditions with 10% packet reordering
 	conditions := &vtcp.NetworkConditions{
 		ReorderPercent: 10.0,
+		DelayMs:        10,
 	}
 	err := cluster.ConfigureNetworkConditions(nodeA, conditions, "eth0")
 	if err != nil {
@@ -363,6 +364,7 @@ func TestOpenSettlementLine10PercentPacketReorderingContractorNode(t *testing.T)
 	// Configure network conditions with 10% packet reordering
 	conditions := &vtcp.NetworkConditions{
 		ReorderPercent: 10.0,
+		DelayMs:        10,
 	}
 	err := cluster.ConfigureNetworkConditions(nodeB, conditions, "eth0")
 	if err != nil {
@@ -390,6 +392,7 @@ func TestOpenSettlementLine10PercentPacketReorderingBothNodes(t *testing.T) {
 	// Configure network conditions with 10% packet reordering
 	conditions := &vtcp.NetworkConditions{
 		ReorderPercent: 10.0,
+		DelayMs:        10,
 	}
 	err := cluster.ConfigureNetworkConditions(nodeA, conditions, "eth0")
 	if err != nil {

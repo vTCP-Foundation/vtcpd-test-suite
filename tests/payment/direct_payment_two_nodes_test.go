@@ -93,7 +93,7 @@ func Test2DirectPaymentOvertrustAmount(t *testing.T) {
 	nodeA.CheckMaxFlow(t, nodeB, testconfig.Equivalent, "1000")
 
 	// Test-specific logic for Test2DirectPaymentOvertrustAmount
-	nodeB.SetSettlementLine(t, nodeA, testconfig.Equivalent, "1000")
+	nodeB.SetSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
 	nodeA.CheckMaxFlow(t, nodeB, testconfig.Equivalent, "1000")
 	nodeC.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
 	nodeA.CheckMaxFlowBatch(t,

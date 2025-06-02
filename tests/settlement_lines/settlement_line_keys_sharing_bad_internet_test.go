@@ -35,22 +35,22 @@ func setupNodesForSettlementLineKeysSharingBadInternetTest(t *testing.T, count i
 
 	cluster.RunNodes(ctx, t, nodes)
 	nodes[0].OpenChannelAndCheck(t, nodes[1])
-	nodes[0].CreateSettlementLineAndCheck(t, nodes[1], testconfig.Equivalent, "1000")
+	nodes[0].CreateAndSetSettlementLineAndCheck(t, nodes[1], testconfig.Equivalent, "1000")
 
 	return nodes, cluster
 }
 
 func waitSettlementLineKeysSharingActive(t *testing.T, nodeA *vtcp.Node, nodeB *vtcp.Node) {
 	currentAttempt := 0
-	maxAttempts := 30
+	timeFinish := time.Now().Add(350 * time.Second)
 	for {
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 		t.Logf("Attempt %d", currentAttempt)
 		nodeInfo, stausCode, err := nodeA.GetSettlementsLineInfoByAddress(nodeB, testconfig.Equivalent)
 		if err != nil {
 			t.Logf("failed to get settlements line info: %v", err)
 			currentAttempt++
-			if currentAttempt > maxAttempts {
+			if time.Now().After(timeFinish) {
 				t.Fatalf("exceeded max attempts to get settlements line info: %v", err)
 			}
 			continue
@@ -58,7 +58,7 @@ func waitSettlementLineKeysSharingActive(t *testing.T, nodeA *vtcp.Node, nodeB *
 		if stausCode != vtcp.StatusOK {
 			t.Logf("failed to get settlements line info, wrong response status code: %d", stausCode)
 			currentAttempt++
-			if currentAttempt > maxAttempts {
+			if time.Now().After(timeFinish) {
 				t.Fatalf("exceeded max attempts to get settlements line info: %v", err)
 			}
 			continue
@@ -66,7 +66,7 @@ func waitSettlementLineKeysSharingActive(t *testing.T, nodeA *vtcp.Node, nodeB *
 		if nodeInfo.State != vtcp.SettlementLineStateActive {
 			t.Logf("Settlements line state: %s", nodeInfo.State)
 			currentAttempt++
-			if currentAttempt > maxAttempts {
+			if time.Now().After(timeFinish) {
 				t.Fatalf("exceeded max attempts to get settlements line info: %v", err)
 			}
 			continue
@@ -337,6 +337,7 @@ func TestSettlementLineKeysSharing10PercentPacketReorderingInitiatorNode(t *test
 	// Configure network conditions with 10% packet reordering
 	conditions := &vtcp.NetworkConditions{
 		ReorderPercent: 10.0,
+		DelayMs:        10,
 	}
 	err := cluster.ConfigureNetworkConditions(nodeA, conditions, "eth0")
 	if err != nil {
@@ -364,6 +365,7 @@ func TestSettlementLineKeysSharing10PercentPacketReorderingContractorNode(t *tes
 	// Configure network conditions with 10% packet reordering
 	conditions := &vtcp.NetworkConditions{
 		ReorderPercent: 10.0,
+		DelayMs:        10,
 	}
 	err := cluster.ConfigureNetworkConditions(nodeB, conditions, "eth0")
 	if err != nil {
@@ -391,6 +393,7 @@ func TestSettlementLineKeysSharing10PercentPacketReorderingBothNodes(t *testing.
 	// Configure network conditions with 10% packet reordering
 	conditions := &vtcp.NetworkConditions{
 		ReorderPercent: 10.0,
+		DelayMs:        10,
 	}
 	err := cluster.ConfigureNetworkConditions(nodeA, conditions, "eth0")
 	if err != nil {

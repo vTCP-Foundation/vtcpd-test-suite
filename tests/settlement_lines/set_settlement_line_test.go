@@ -46,7 +46,7 @@ func TestSettlementLineSetNormalPass(t *testing.T) {
 	nodes, _ := setupNodesForSetSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(5 * time.Second) // Allow time for processing
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -71,7 +71,7 @@ func TestSettlementLineTooFastSetAndRejectSet(t *testing.T) {
 	time.Sleep(3 * time.Second)         // Allow time for processing
 
 	// NodeA sets debug flag: reject new TL request if previous is not finished
-	nodeA.SetTestingSLFlag(vtcp.TrustLineDebugFlagRejectNewRequestRace, vtcp.SettlementLineSetMessageType, "1", "")
+	nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLineSetInitiatorTransactionType, "1", "")
 	// NodeA opens settlement line with NodeC, expect no immediate error because it's the first operation
 	nodeA.CreateSettlementLine(t, nodeC, testconfig.Equivalent)
 	time.Sleep(4 * time.Second) // Allow time for processing
@@ -80,7 +80,7 @@ func TestSettlementLineTooFastSetAndRejectSet(t *testing.T) {
 	// In the python test, the first set_trustline happens, then a check, then another set_trustline.
 	// The debug flag is meant to ensure that a *new* request is rejected if the *previous* is not done.
 	// So, the first set should go through if CreateSettlementLine completed. If CreateSettlementLine is fast, this tests the set operation with the flag.
-	nodeA.SetSettlementLine(t, nodeC, testconfig.Equivalent, "100")
+	nodeA.SetSettlementLine(t, nodeC, testconfig.Equivalent, "100", vtcp.StatusOK)
 	time.Sleep(20 * time.Second) // Allow time for processing and potential rejection/retry logic
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
@@ -88,7 +88,7 @@ func TestSettlementLineTooFastSetAndRejectSet(t *testing.T) {
 	nodeA.CheckSettlementLineState(t, nodeC, testconfig.Equivalent, vtcp.SettlementLineStateActive) // Check if the line is active
 	nodeC.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive) // Check from C's perspective
 	// It seems the original python test then sets it again to a new value.
-	nodeA.SetSettlementLine(t, nodeC, testconfig.Equivalent, "500")
+	nodeA.SetSettlementLine(t, nodeC, testconfig.Equivalent, "500", vtcp.StatusOK)
 	time.Sleep(5 * time.Second) // Allow time for processing
 
 	nodeA.CheckSettlementLineState(t, nodeC, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -117,7 +117,7 @@ func TestSettlementLineTooFastSetAndRejectAudit(t *testing.T) {
 	// The message type here is SettlementLineSetMessageType which corresponds to "106" for the *request* from A to C.
 	// When C processes this, it might involve an audit. The python test uses `self.trustLineMessage` (106).
 	// For "reject audit", it implies C is rejecting an audit step related to A's SetSettlementLine request.
-	nodeC.SetTestingSLFlag(vtcp.TrustLineDebugFlagRejectNewAuditRace, vtcp.SettlementLineSetMessageType, "1", "")
+	nodeC.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLineSetInitiatorTransactionType, "1", "")
 
 	// NodeC initiates opening a settlement line with NodeA. (Python: self.node_C.open_trustline(self.node_A, is_check_conditions=False))
 	// This is a bit different from the `too_fast_set_and_reject_set` where A opens with C.
@@ -125,7 +125,7 @@ func TestSettlementLineTooFastSetAndRejectAudit(t *testing.T) {
 	time.Sleep(3 * time.Second)
 
 	// NodeC sets settlement line with NodeA. (Python: self.node_C.set_trustline(self.node_A, 100))
-	nodeC.SetSettlementLine(t, nodeA, testconfig.Equivalent, "100")
+	nodeC.SetSettlementLine(t, nodeA, testconfig.Equivalent, "100", vtcp.StatusOK)
 	time.Sleep(20 * time.Second) // Allow time for processing and potential rejection logic
 
 	nodeC.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -134,7 +134,7 @@ func TestSettlementLineTooFastSetAndRejectAudit(t *testing.T) {
 	// Python: self.node_A.set_trustline(self.node_C, 500) - A sets line with C
 	// This seems to be a separate operation, perhaps to confirm the system is stable after the previous potential race condition.
 	// Or it's ensuring that Node A can still operate normally with Node C.
-	nodeA.SetSettlementLine(t, nodeC, testconfig.Equivalent, "500")
+	nodeA.SetSettlementLine(t, nodeC, testconfig.Equivalent, "500", vtcp.StatusOK)
 	time.Sleep(5 * time.Second)
 
 	nodeA.CheckSettlementLineState(t, nodeC, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -145,18 +145,16 @@ func TestSettlementLineTooFastSetAndRejectAudit(t *testing.T) {
 	nodeC.CheckSerializedTransaction(t, false, 0)
 }
 
-// MESSAGE LOSING TESTS
-
 func TestSettlementLineSetLostTLMessage(t *testing.T) {
 	nodes, cluster := setupNodesForSetSettlementLineTest(t, 2)
 	defer cluster.StopNodes(context.Background(), t, nodes)
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// NodeB simulates losing the SetSettlementLine message once
-	nodeB.SetTestingSLFlag(vtcp.FlagForbidSendInitMessage, vtcp.SettlementLineSetMessageType, "1", "")
+	nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLineSetInitiatorTransactionType, "1", "")
 	time.Sleep(1 * time.Second) // Allow flag to be processed
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	// DefaultWaitingResponseTime (20s) + 15s buffer
 	time.Sleep(vtcp.DefaultWaitingResponseTime + 15*time.Second)
 
@@ -173,10 +171,10 @@ func TestSettlementLineSetLostTLMessageWithTAResuming(t *testing.T) {
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// NodeB simulates losing the SetSettlementLine message DefaultMaxMessageSendingAttemptsInt times
-	nodeB.SetTestingSLFlag(vtcp.FlagForbidSendInitMessage, vtcp.SettlementLineSetMessageType, vtcp.DefaultMaxMessageSendingAttemptsStr, "")
+	nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLineSetInitiatorTransactionType, vtcp.DefaultMaxMessageSendingAttemptsStr, "")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	// DefaultWaitingResponseTime * MaxAttempts + 15s buffer
 	time.Sleep(vtcp.DefaultWaitingResponseTime*time.Duration(vtcp.DefaultMaxMessageSendingAttemptsInt) + 15*time.Second)
 
@@ -193,10 +191,10 @@ func TestSettlementLineSetLostTLMessageWithTAResumingAndLostAgain(t *testing.T) 
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	attempts := vtcp.DefaultMaxMessageSendingAttemptsInt + 1
-	nodeB.SetTestingSLFlag(vtcp.FlagForbidSendInitMessage, vtcp.SettlementLineSetMessageType, strconv.Itoa(attempts), "")
+	nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLineSetInitiatorTransactionType, strconv.Itoa(attempts), "")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(vtcp.DefaultWaitingResponseTime*time.Duration(attempts) + 15*time.Second)
 
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -212,10 +210,10 @@ func TestSettlementLineSetLostTLMessageWithTAResumingSecondTime(t *testing.T) {
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	attempts := vtcp.DefaultMaxMessageSendingAttemptsInt * 2
-	nodeB.SetTestingSLFlag(vtcp.FlagForbidSendInitMessage, vtcp.SettlementLineSetMessageType, strconv.Itoa(attempts), "")
+	nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLineSetInitiatorTransactionType, strconv.Itoa(attempts), "")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(vtcp.DefaultWaitingResponseTime*time.Duration(attempts) + 15*time.Second)
 
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -231,10 +229,10 @@ func TestSettlementLineSetLostTLConfirmationMessage(t *testing.T) {
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// NodeA simulates losing the confirmation (audit) message once
-	nodeA.SetTestingSLFlag(vtcp.FlagForbidSendInitMessage, vtcp.SettlementLineSetAuditMessageType, "1", "")
+	nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionCoordinatorRequest, vtcp.SettlementLineSetInitiatorTransactionType, "1", "")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(vtcp.DefaultWaitingResponseTime + 15*time.Second)
 
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -249,10 +247,10 @@ func TestSettlementLineSetLostTLConfirmationMessageWithTAResuming(t *testing.T) 
 	defer cluster.StopNodes(context.Background(), t, nodes)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeA.SetTestingSLFlag(vtcp.FlagForbidSendInitMessage, vtcp.SettlementLineSetAuditMessageType, vtcp.DefaultMaxMessageSendingAttemptsStr, "")
+	nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionCoordinatorRequest, vtcp.SettlementLineSetInitiatorTransactionType, vtcp.DefaultMaxMessageSendingAttemptsStr, "")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(vtcp.DefaultWaitingResponseTime*time.Duration(vtcp.DefaultMaxMessageSendingAttemptsInt) + 15*time.Second)
 
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -268,10 +266,10 @@ func TestSettlementLineSetLostTLConfirmationMessageWithTAResumingAndLostAgain(t 
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	attempts := vtcp.DefaultMaxMessageSendingAttemptsInt + 1
-	nodeA.SetTestingSLFlag(vtcp.FlagForbidSendInitMessage, vtcp.SettlementLineSetAuditMessageType, strconv.Itoa(attempts), "")
+	nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionCoordinatorRequest, vtcp.SettlementLineSetInitiatorTransactionType, strconv.Itoa(attempts), "")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(vtcp.DefaultWaitingResponseTime*time.Duration(attempts) + 15*time.Second)
 
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -287,10 +285,10 @@ func TestSettlementLineSetLostTLConfirmationMessageWithTAResumingSecondTime(t *t
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	attempts := vtcp.DefaultMaxMessageSendingAttemptsInt * 2
-	nodeA.SetTestingSLFlag(vtcp.FlagForbidSendInitMessage, vtcp.SettlementLineSetAuditMessageType, strconv.Itoa(attempts), "")
+	nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionCoordinatorRequest, vtcp.SettlementLineSetInitiatorTransactionType, strconv.Itoa(attempts), "")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(vtcp.DefaultWaitingResponseTime*time.Duration(attempts) + 15*time.Second)
 
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -311,14 +309,14 @@ func TestSettlementLineSetExceptionOnInitTAModifyingStage(t *testing.T) {
 
 	// Configure NodeA to throw an exception (type 1) during the initiator TA_MODIFYING stage
 	// for transactions of type SettlementLineSetInitiatorTransactionType ("102").
-	nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLineSetInitiatorTransactionType, "1", "0")
+	nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLineSetInitiatorTransactionType, "1", "0")
 	time.Sleep(1 * time.Second) // Allow flag to set
 
 	// NodeA attempts to set the settlement line. Expect a 501 Not Implemented error due to the debug flag.
 	// The Python test has `status_code=501`
 	// TODO: add SetSettlementLineAndCheckStatus
 	//nodeA.SetSettlementLineAndCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusNotImplemented) // 501
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000") // 501
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK) // 501
 
 	time.Sleep(60 * time.Second) // Wait for potential recovery or final state
 
@@ -341,11 +339,11 @@ func TestSettlementLineSetIOExceptionOnInitTAModifyingStage(t *testing.T) {
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// Configure NodeA to throw an IO exception (type 2) during the initiator TA_MODIFYING stage.
-	nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLineSetInitiatorTransactionType, "2", "0")
+	nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLineSetInitiatorTransactionType, "2", "0")
 	time.Sleep(1 * time.Second)
 
 	// NodeA attempts to set the settlement line. This might return OK locally but fail to propagate or complete.
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000") // No specific error code expected on the call itself by default
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK) // No specific error code expected on the call itself by default
 
 	time.Sleep(60 * time.Second)
 
@@ -363,10 +361,10 @@ func TestSettlementLineSetExceptionOnInitTAResponseProcessingStage(t *testing.T)
 	defer cluster.StopNodes(context.Background(), t, nodes)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAResponseProcessingStage, vtcp.SettlementLineSetInitiatorTransactionType, "1", "0")
+	nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionCoordinatorRequest, vtcp.SettlementLineSetInitiatorTransactionType, "1", "0")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(60 * time.Second)
 
 	// Python: node_B.check_max_flow({self.node_A.address: 1000}) - implies it should succeed
@@ -384,10 +382,10 @@ func TestSettlementLineSetIOExceptionOnInitTAResponseProcessingStage(t *testing.
 	defer cluster.StopNodes(context.Background(), t, nodes)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAResponseProcessingStage, vtcp.SettlementLineSetInitiatorTransactionType, "2", "0")
+	nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionCoordinatorRequest, vtcp.SettlementLineSetInitiatorTransactionType, "2", "0")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(60 * time.Second)
 
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -404,10 +402,10 @@ func TestSettlementLineSetExceptionOnInitTAResumingStage(t *testing.T) {
 	defer cluster.StopNodes(context.Background(), t, nodes)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAResumingStage, vtcp.SettlementLineSetInitiatorTransactionType, "1", "0")
+	nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionNextNeighborResponse, vtcp.SettlementLineSetInitiatorTransactionType, "1", "0")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(60 * time.Second)
 
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -424,10 +422,10 @@ func TestSettlementLineSetIOExceptionOnInitTAResumingStage(t *testing.T) {
 	defer cluster.StopNodes(context.Background(), t, nodes)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAResumingStage, vtcp.SettlementLineSetInitiatorTransactionType, "2", "0")
+	nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionNextNeighborResponse, vtcp.SettlementLineSetInitiatorTransactionType, "2", "0")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(60 * time.Second)
 
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -446,10 +444,10 @@ func TestSettlementLineSetExceptionOnTargetTAStage(t *testing.T) {
 
 	// Configure NodeB to throw an exception (type 1) during its TA_STAGE
 	// for transactions of type SettlementLineSetTargetTransactionType ("107").
-	nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLineSetTargetTransactionType, "1", "0")
+	nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionVote, vtcp.SettlementLineSetTargetTransactionType, "1", "0")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(60 * time.Second)
 
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -467,10 +465,10 @@ func TestSettlementLineSetIOExceptionOnTargetTAStage(t *testing.T) {
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// Configure NodeB to throw an IO exception (type 2) during its TA_STAGE.
-	nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLineSetTargetTransactionType, "2", "0")
+	nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionVote, vtcp.SettlementLineSetTargetTransactionType, "2", "0")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(60 * time.Second)
 
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
@@ -489,13 +487,13 @@ func TestSettlementLineSetTerminateOnInitTAModifyingStage(t *testing.T) {
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// Configure NodeA to terminate (type 1) during initiator TA_MODIFYING stage.
-	nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAModifyingStage, vtcp.SettlementLineSetInitiatorTransactionType, "1", "0")
+	nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, vtcp.SettlementLineSetInitiatorTransactionType, "1", "0")
 	time.Sleep(1 * time.Second)
 
 	// Expect 503 Service Unavailable as the node might terminate during the request.
 	// TODO: add SetSettlementLineAndCheckStatus
 	//nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusServiceUnavailable)
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 
 	time.Sleep(140 * time.Second) // Python test waits 140s
 
@@ -521,10 +519,10 @@ func TestSettlementLineSetTerminateAfterInitTAModifyingStage(t *testing.T) {
 	nodes, cluster := setupNodesForSetSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAModifyingStage, vtcp.SettlementLineSetInitiatorTransactionType, "2", "0") // Type 2 for "after"
+	nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, vtcp.SettlementLineSetInitiatorTransactionType, "2", "0") // Type 2 for "after"
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000") // May or may not return error immediately
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK) // May or may not return error immediately
 	time.Sleep(140 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "1000")
@@ -538,10 +536,10 @@ func TestSettlementLineSetTerminateOnInitTAResponseProcessingStage(t *testing.T)
 	nodes, cluster := setupNodesForSetSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResponseProcessingStage, vtcp.SettlementLineSetInitiatorTransactionType, "1", "0")
+	nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessCoordinatorRequest, vtcp.SettlementLineSetInitiatorTransactionType, "1", "0")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(140 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "1000")
@@ -555,10 +553,10 @@ func TestSettlementLineSetTerminateAfterInitTAResponseProcessingStage(t *testing
 	nodes, cluster := setupNodesForSetSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResponseProcessingStage, vtcp.SettlementLineSetInitiatorTransactionType, "2", "0")
+	nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessCoordinatorRequest, vtcp.SettlementLineSetInitiatorTransactionType, "2", "0")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(140 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "1000")
@@ -572,10 +570,10 @@ func TestSettlementLineSetTerminateOnInitTAResumingStage(t *testing.T) {
 	nodes, cluster := setupNodesForSetSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResumingStage, vtcp.SettlementLineSetInitiatorTransactionType, "1", "0")
+	nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessNextNeighborResponse, vtcp.SettlementLineSetInitiatorTransactionType, "1", "0")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(140 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "1000")
@@ -589,10 +587,10 @@ func TestSettlementLineSetTerminateAfterInitTAResumingStage(t *testing.T) {
 	nodes, cluster := setupNodesForSetSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResumingStage, vtcp.SettlementLineSetInitiatorTransactionType, "2", "0")
+	nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessNextNeighborResponse, vtcp.SettlementLineSetInitiatorTransactionType, "2", "0")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(140 * time.Second)
 
 	nodeB.CheckMaxFlow(t, nodeA, testconfig.Equivalent, "1000")
@@ -609,7 +607,7 @@ func TestSettlementLineSetTerminateOnContractorTAStage(t *testing.T) {
 	nodeB.SetTestingSLFlag(vtcp.FlagTerminateProcessVote, vtcp.SettlementLineSetTargetTransactionType, "1", "0")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(140 * time.Second)
 
 	nodeA.CheckMaxFlow(t, nodeB, testconfig.Equivalent, "1000") // Check from A's perspective
@@ -626,7 +624,7 @@ func TestSettlementLineSetTerminateAfterContractorTAStage(t *testing.T) {
 	nodeB.SetTestingSLFlag(vtcp.FlagTerminateProcessVote, vtcp.SettlementLineSetTargetTransactionType, "2", "0")
 	time.Sleep(1 * time.Second)
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	time.Sleep(140 * time.Second)
 
 	nodeA.CheckMaxFlow(t, nodeB, testconfig.Equivalent, "1000")

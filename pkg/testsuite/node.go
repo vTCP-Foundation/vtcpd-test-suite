@@ -30,16 +30,18 @@ const (
 
 	StatusOK                 = 200
 	StatusProtocolError      = 401
+	StatusAlreadyExists      = 402
 	StatusNoConsensusError   = 409
 	StatusInsufficientFunds  = 412
 	StatusNoPaymentRoutes    = 462
-	StatusNotImplemented     = 501 // HTTP 501 Not Implemented
-	StatusServiceUnavailable = 503 // HTTP 503 Service Unavailable
+	StatusUnexpectedError    = 501
+	StatusServiceUnavailable = 503
 
 	PaymentObservingStateNoInfo   = "0"
 	PaymentObservingStateClaimed  = "1"
 	PaymentObservingStateRejected = "5"
 
+	WaitingAuditResponseSec     = 20
 	WaitingParticipantsVotesSec = 15
 
 	NodePaymentRecoveryAttempts      = 3
@@ -49,16 +51,8 @@ const (
 	ObservingCntSecondsPerBlock   = 20
 
 	// Test Flags for SetTestingSLFlag (derived from Python test_trustlines_open.py)
-	TrustLineDebugFlagRejectNewRequestRace           uint32 = 4        // Corresponds to Python's usage of 4 in set_TL_debug_flag for rejecting new requests during trustline operations. The specific meaning (request vs audit) is often contextual to the message type it's paired with.
-	TrustLineDebugFlagRejectNewAuditRace             uint32 = 4        // Also uses 4, context via message type. Python used same numeric flag for different semantic meanings.
-	TestFlagExceptionOnInitTAModifyingStage          uint32 = 2048     // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_MODIFYING_STAGE_EXCEPTION
-	TestFlagExceptionOnInitTAResponseProcessingStage uint32 = 4096     // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_RESPONSE_PROCESSING_STAGE_EXCEPTION
-	TestFlagExceptionOnInitTAResumingStage           uint32 = 8192     // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_RESUMING_STAGE_EXCEPTION
-	TestFlagExceptionOnContractorTAStage             uint32 = 16384    // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_CONTRACTOR_TA_STAGE_EXCEPTION
-	TestFlagTerminateOnInitTAModifyingStage          uint32 = 2097152  // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_MODIFYING_STAGE_TERMINATE
-	TestFlagTerminateOnInitTAResponseProcessingStage uint32 = 4194304  // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_RESPONSE_PROCESSING_STAGE_TERMINATE
-	TestFlagTerminateOnInitTAResumingStage           uint32 = 8388608  // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_INITIATOR_TA_RESUMING_STAGE_TERMINATE
-	TestFlagTerminateOnContractorTAStage             uint32 = 16777216 // VTCPD_DEBUG_FLAG_SETTLEMENT_LINE_CONTRACTOR_TA_STAGE_TERMINATE
+	TrustLineDebugFlagRejectNewRequestRace uint64 = 4 // Corresponds to Python's usage of 4 in set_TL_debug_flag for rejecting new requests during trustline operations. The specific meaning (request vs audit) is often contextual to the message type it's paired with.
+	TrustLineDebugFlagRejectNewAuditRace   uint64 = 4 // Also uses 4, context via message type. Python used same numeric flag for different semantic meanings.
 
 	// Message types/codes for SetTestingSLFlag firstParam (derived from Python)
 	// These typically correspond to transaction types or message identifiers used in debug flags.
@@ -77,6 +71,7 @@ const (
 	SettlementLinePublicKeyInitMessageType     = "103" // Python: self.publicKeyInitMessage
 	SettlementLinePublicKeyMessageType         = "104" // Python: self.publicKeyMessage (also sourceTransactionType for these tests)
 	SettlementLinePublicKeyResponseMessageType = "105" // Python: self.publicKeyResponseMessage (also targetTransactionType for these tests)
+	SettlementLineParticipantVotesMessageType  = "218" // Python: self.participantVotesMessage
 
 	// Default values inspired by Python test suite
 	DefaultKeysCount                      = 20
@@ -86,6 +81,7 @@ const (
 	DefaultWaitingResponseTime            = 20 * time.Second
 	DefaultMaxMessageSendingAttemptsStr   = "3" // As string for SetTestingSLFlag
 	DefaultMaxMessageSendingAttemptsInt   = 3
+	DefaultAuditPaymentsCount             = 10
 
 	// Log Messages
 	LogMessageRecoveringLogMessage = "runVotesRecoveryParentStage"
@@ -95,27 +91,30 @@ const (
 // Testing flags based on Python test suite debug flags
 const (
 	// From test_transaction_direct_payment_two_nodes.py and their Go equivalents
-	FlagForbidSendInitMessage                        uint32 = 4        // Python: flag_forbid_send_init_message
-	FlagForbidSendMessageToCoordinatorReservation    uint32 = 8        // Python: flag_forbid_send_message_to_coordinator_on_reservation
-	FlagForbidSendRequestToIntermediateReservation   uint32 = 16       // Python: flag_forbid_send_request_to_intermediate_node_on_reservation
-	FlagForbidSendResponseToIntemediateOnReservation uint32 = 32       // Python: flag_forbid_send_response_to_intermediate_node_on_reservation
-	FlagForbidSendMessageFinalPathConfig             uint32 = 64       // Python: flag_forbid_send_message_with_final_path_configuration
-	FlagForbidSendMessageFinalAmountClarification    uint32 = 128      // Python: flag_forbid_send_message_on_final_amount_clarification
-	FlagForbidSendMessageVoteStage                   uint32 = 256      // Python: flag_forbid_send_message_on_vote_stage
-	FlagForbidSendMessageVoteConsistency             uint32 = 512      // Python: flag_forbid_send_message_on_vote_consistency
-	FlagForbidSendMessageRecoveryStage               uint32 = 1024     // Python: flag_forbid_send_message_on_recovery_stage
-	FlagThrowExceptionPreviousNeighborRequest        uint32 = 2048     // Python: flag_throw_exception_on_previous_neighbor_request
-	FlagThrowExceptionCoordinatorRequest             uint32 = 4096     // Python: flag_throw_exception_on_coordinator_request_processing
-	FlagThrowExceptionNextNeighborResponse           uint32 = 8192     // Python: flag_throw_exception_on_next_neighbor_response_processing
-	FlagThrowExceptionVote                           uint32 = 16384    // Python: flag_throw_exception_on_vote
-	FlagThrowExceptionVoteConsistency                uint32 = 32768    // Python: flag_throw_exception_on_vote_consistency
-	FlagThrowExceptionCoordinatorAfterApprove        uint32 = 65536    // Python: flag_throw_exception_on_coordinator_after_approve_before_send_message
-	FlagTerminateProcessPreviousNeighborRequest      uint32 = 2097152  // Python: flag_terminate_process_on_previous_neighbor_request
-	FlagTerminateProcessCoordinatorRequest           uint32 = 4194304  // Python: flag_terminate_process_on_coordinator_request_processing
-	FlagTerminateProcessNextNeighborResponse         uint32 = 8388608  // Python: flag_terminate_process_on_next_neighbor_response_processing
-	FlagTerminateProcessVote                         uint32 = 16777216 // Python: flag_terminate_process_on_vote
-	FlagTerminateProcessVoteConsistency              uint32 = 33554432 // Python: flag_terminate_process_on_vote_consistency
-	FlagTerminateProcessCoordinatorAfterApprove      uint32 = 67108864 // Python: flag_terminate_process_on_coordinator_after_approve_before_send_message
+	FlagForbidSendInitMessage                        uint64 = 4           // Python: flag_forbid_send_init_message
+	FlagForbidSendMessageToCoordinatorReservation    uint64 = 8           // Python: flag_forbid_send_message_to_coordinator_on_reservation
+	FlagForbidSendRequestToIntermediateReservation   uint64 = 16          // Python: flag_forbid_send_request_to_intermediate_node_on_reservation
+	FlagForbidSendResponseToIntemediateOnReservation uint64 = 32          // Python: flag_forbid_send_response_to_intermediate_node_on_reservation
+	FlagForbidSendMessageFinalPathConfig             uint64 = 64          // Python: flag_forbid_send_message_with_final_path_configuration
+	FlagForbidSendMessageFinalAmountClarification    uint64 = 128         // Python: flag_forbid_send_message_on_final_amount_clarification
+	FlagForbidSendMessageVoteStage                   uint64 = 256         // Python: flag_forbid_send_message_on_vote_stage
+	FlagForbidSendMessageVoteConsistency             uint64 = 512         // Python: flag_forbid_send_message_on_vote_consistency
+	FlagForbidSendMessageRecoveryStage               uint64 = 1024        // Python: flag_forbid_send_message_on_recovery_stage
+	FlagThrowExceptionPreviousNeighborRequest        uint64 = 2048        // Python: flag_throw_exception_on_previous_neighbor_request
+	FlagThrowExceptionCoordinatorRequest             uint64 = 4096        // Python: flag_throw_exception_on_coordinator_request_processing
+	FlagThrowExceptionNextNeighborResponse           uint64 = 8192        // Python: flag_throw_exception_on_next_neighbor_response_processing
+	FlagThrowExceptionVote                           uint64 = 16384       // Python: flag_throw_exception_on_vote
+	FlagThrowExceptionVoteConsistency                uint64 = 32768       // Python: flag_throw_exception_on_vote_consistency
+	FlagThrowExceptionCoordinatorAfterApprove        uint64 = 65536       // Python: flag_throw_exception_on_coordinator_after_approve_before_send_message
+	FlagTerminateProcessPreviousNeighborRequest      uint64 = 2097152     // Python: flag_terminate_process_on_previous_neighbor_request
+	FlagTerminateProcessCoordinatorRequest           uint64 = 4194304     // Python: flag_terminate_process_on_coordinator_request_processing
+	FlagTerminateProcessNextNeighborResponse         uint64 = 8388608     // Python: flag_terminate_process_on_next_neighbor_response_processing
+	FlagTerminateProcessVote                         uint64 = 16777216    // Python: flag_terminate_process_on_vote
+	FlagTerminateProcessVoteConsistency              uint64 = 33554432    // Python: flag_terminate_process_on_vote_consistency
+	FlagTerminateProcessCoordinatorAfterApprove      uint64 = 67108864    // Python: flag_terminate_process_on_coordinator_after_approve_before_send_message
+	FlagSleepOnNextNeighborResponseProcessing        uint64 = 8589934592  // Python: flag_sleep_on_next_neighbor_response_processing
+	FlagSleepOnFinalAmountClarification              uint64 = 17179869184 // Python: flag_sleep_on_final_amount_clarification
+	FlagSleepOnVoteConsistencyStage                  uint64 = 68719476736 // Python: flag_sleep_on_vote_consistency_stage
 )
 
 type Node struct {
@@ -137,8 +136,11 @@ type ChannelInitResponseData struct {
 
 // ChannelInfo holds information about a channel between nodes.
 type ChannelInfo struct {
-	ChannelID        string `json:"channel_id"`
-	ChannelConfirmed string `json:"channel_confirmed"`
+	ChannelID                  string   `json:"channel_id"`
+	ChannelAddresses           []string `json:"channel_addresses"`
+	ChannelConfirmed           string   `json:"channel_confirmed"`
+	ChannelCryptoKey           string   `json:"channel_crypto_key"`
+	ChannelContractorCryptoKey string   `json:"channel_contractor_crypto_key"`
 }
 
 // SettlementLineInfo holds information about a settlement line.
@@ -212,6 +214,49 @@ func (n *Node) GetIPAddressForRequests() string {
 	return fmt.Sprintf("12-%s:%d", n.IPAddress, n.NodePort)
 }
 
+func (n *Node) InitChannelCheckStatusCode(t *testing.T, targetNode *Node, cryptoKey string, channelID string, expectedStatusCode int) {
+	initURL := fmt.Sprintf("http://%s:%d/api/v1/node/contractors/init-channel/?contractor_address=%s",
+		n.IPAddress, n.CLIPort, targetNode.GetIPAddressForRequests())
+
+	if cryptoKey != "" {
+		initURL += fmt.Sprintf("&crypto_key=%s&contractor_id=%s", cryptoKey, channelID)
+	}
+
+	// Send the request to initialize the channel
+	resp, err := http.Post(initURL, "application/json", nil)
+	if err != nil {
+		t.Fatalf("failed to send init-channel request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != expectedStatusCode {
+		t.Fatalf("init-channel request failed with status: %d", resp.StatusCode)
+	}
+}
+
+func (n *Node) GetChannelInfo(t *testing.T, channelID string) *ChannelInfo {
+	url := fmt.Sprintf("http://%s:%d/api/v1/node/channels/%s/",
+		n.IPAddress, n.CLIPort, channelID)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatalf("failed to send get channel request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("get channel request failed with status: %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Data ChannelInfo `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode get channel response: %v", err)
+	}
+	return &result.Data
+}
+
 // OpenChannel opens a channel between this node and the target node.
 // It uses the init-channel functionality to establish the connection.
 // Returns an error if the channel initialization fails, otherwise returns nil.
@@ -229,7 +274,7 @@ func (n *Node) OpenChannel(t *testing.T, targetNode *Node) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != StatusOK {
 		t.Fatalf("init-channel request failed with status: %d", resp.StatusCode)
 	}
 
@@ -261,7 +306,7 @@ func (n *Node) OpenChannel(t *testing.T, targetNode *Node) {
 
 // getChannelInfo queries the channel-by-address endpoint to get channel info with another node.
 // Returns channel info or an error.
-func (n *Node) GetChannelInfo(targetNode *Node) (*ChannelInfo, error) {
+func (n *Node) GetChannelInfoByAddress(targetNode *Node) (*ChannelInfo, error) {
 	url := fmt.Sprintf("http://%s:%d/api/v1/node/channel-by-address/?contractor_address=%s",
 		n.IPAddress, n.CLIPort, targetNode.GetIPAddressForRequests())
 
@@ -286,14 +331,14 @@ func (n *Node) GetChannelInfo(targetNode *Node) (*ChannelInfo, error) {
 
 func (n *Node) OpenChannelAndCheck(t *testing.T, targetNode *Node) {
 	n.OpenChannel(t, targetNode)
-	channelInfo, err := n.GetChannelInfo(targetNode)
+	channelInfo, err := n.GetChannelInfoByAddress(targetNode)
 	if err != nil {
 		t.Fatalf("failed to get channel info: %v", err)
 	}
 	if channelInfo.ChannelConfirmed != ChannelConfirmed {
 		t.Fatalf("channel is not confirmed")
 	}
-	channelInfo, err = targetNode.GetChannelInfo(n)
+	channelInfo, err = targetNode.GetChannelInfoByAddress(n)
 	if err != nil {
 		t.Fatalf("failed to get channel info: %v", err)
 	}
@@ -307,7 +352,7 @@ func (n *Node) OpenChannelAndCheck(t *testing.T, targetNode *Node) {
 func (n *Node) CreateAndSetSettlementLine(t *testing.T, targetNode *Node, equivalent string, amount string) {
 	n.CreateSettlementLine(t, targetNode, equivalent)
 	time.Sleep(2 * time.Second)
-	n.SetSettlementLine(t, targetNode, equivalent, amount)
+	n.SetSettlementLine(t, targetNode, equivalent, amount, StatusOK)
 }
 
 // CreateAndSetSettlementLine creates a settlement line with another node.
@@ -315,7 +360,7 @@ func (n *Node) CreateAndSetSettlementLine(t *testing.T, targetNode *Node, equiva
 // Returns error if any step fails.
 func (n *Node) CreateSettlementLine(t *testing.T, targetNode *Node, equivalent string) {
 	// Step 1: Get contractor_id (channel_id) for the target node
-	channelInfo, err := n.GetChannelInfo(targetNode)
+	channelInfo, err := n.GetChannelInfoByAddress(targetNode)
 	if err != nil {
 		t.Fatalf("failed to get channel info: %v", err)
 	}
@@ -335,9 +380,9 @@ func (n *Node) CreateSettlementLine(t *testing.T, targetNode *Node, equivalent s
 	}
 }
 
-func (n *Node) SetSettlementLine(t *testing.T, targetNode *Node, equivalent string, amount string) {
+func (n *Node) SetSettlementLine(t *testing.T, targetNode *Node, equivalent string, amount string, expectedStatusCode int) {
 	// Step 1: Get contractor_id (channel_id) for the target node
-	channelInfo, err := n.GetChannelInfo(targetNode)
+	channelInfo, err := n.GetChannelInfoByAddress(targetNode)
 	if err != nil {
 		t.Fatalf("failed to get channel info: %v", err)
 	}
@@ -357,7 +402,7 @@ func (n *Node) SetSettlementLine(t *testing.T, targetNode *Node, equivalent stri
 		t.Fatalf("failed to send set-settlement-line request: %v", err)
 	}
 	defer setResp.Body.Close()
-	if setResp.StatusCode != http.StatusOK {
+	if setResp.StatusCode != expectedStatusCode {
 		t.Fatalf("set-settlement-line request failed with status: %d", setResp.StatusCode)
 	}
 }
@@ -443,7 +488,7 @@ func (n *Node) CheckActiveSettlementLine(t *testing.T, targetNode *Node, equival
 		SettlementLineKeysPresent, SettlementLineKeysPresent, StatusOK)
 }
 
-func (n *Node) CreateSettlementLineAndCheck(t *testing.T, targetNode *Node, equivalent string, amount string) {
+func (n *Node) CreateAndSetSettlementLineAndCheck(t *testing.T, targetNode *Node, equivalent string, amount string) {
 	n.CreateAndSetSettlementLine(t, targetNode, equivalent, amount)
 
 	time.Sleep(500 * time.Millisecond)
@@ -453,15 +498,22 @@ func (n *Node) CreateSettlementLineAndCheck(t *testing.T, targetNode *Node, equi
 }
 
 func (n *Node) SetSettlementLineAndCheck(t *testing.T, targetNode *Node, equivalent string, amount string) {
-	n.SetSettlementLine(t, targetNode, equivalent, amount)
+	settlementLineInfo, _, err := n.GetSettlementsLineInfoByAddress(targetNode, equivalent)
+	if err != nil {
+		t.Fatalf("failed to get settlement line info: %v", err)
+	}
+	if settlementLineInfo.State != SettlementLineStateActive {
+		t.Fatalf("settlement line is not active")
+	}
+	n.SetSettlementLine(t, targetNode, equivalent, amount, StatusOK)
 	time.Sleep(500 * time.Millisecond)
-	n.CheckActiveSettlementLine(t, targetNode, equivalent, amount, "0", "0")
-	targetNode.CheckActiveSettlementLine(t, n, equivalent, "0", amount, "0")
+	n.CheckActiveSettlementLine(t, targetNode, equivalent, amount, settlementLineInfo.MaxNegativeBalance, settlementLineInfo.Balance)
+	targetNode.CheckActiveSettlementLine(t, n, equivalent, settlementLineInfo.MaxNegativeBalance, amount, settlementLineInfo.Balance)
 }
 
 func (n *Node) CreateChannelAndSettlementLineAndCheck(t *testing.T, targetNode *Node, equivalent string, amount string) {
 	n.OpenChannelAndCheck(t, targetNode)
-	n.CreateSettlementLineAndCheck(t, targetNode, equivalent, amount)
+	n.CreateAndSetSettlementLineAndCheck(t, targetNode, equivalent, amount)
 }
 
 func (n *Node) GetSettlementLines(equivalent string) ([]SettlementLineInfo, error) {
@@ -489,6 +541,34 @@ func (n *Node) GetSettlementLines(equivalent string) ([]SettlementLineInfo, erro
 	}
 
 	return result.Data.SettlementLines, nil
+}
+
+func (n *Node) CloseMaxNegativeBalance(t *testing.T, targetNode *Node, equivalent string) {
+	// Step 1: Get contractor_id (channel_id) for the target node
+	channelInfo, err := n.GetChannelInfoByAddress(targetNode)
+	if err != nil {
+		t.Fatalf("failed to get channel info: %v", err)
+	}
+	contractorID := channelInfo.ChannelID
+
+	// Step 2: Set max negative balance into zero (DELETE)
+	setURL := fmt.Sprintf("http://%s:%d/api/v1/node/contractors/%s/close-incoming-settlement-line/%s/",
+		n.IPAddress, n.CLIPort, contractorID, equivalent)
+	request, err := http.NewRequest(http.MethodDelete, setURL, nil)
+	if err != nil {
+		t.Fatalf("failed to create close-incoming-settlement-line request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	setResp, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("failed to send close-incoming-settlement-line request: %v", err)
+	}
+	defer setResp.Body.Close()
+	if setResp.StatusCode != http.StatusOK {
+		t.Fatalf("close-incoming-settlement-line request failed with status: %d", setResp.StatusCode)
+	}
+
 }
 
 func (n *Node) CheckSettlementLineForSync(t *testing.T, targetNode *Node, equivalent string) {
@@ -530,12 +610,10 @@ func (n *Node) CheckSettlementLineForSync(t *testing.T, targetNode *Node, equiva
 func CheckSettlementLineForSyncBatch(t *testing.T, nodes []*Node, equivalent string, timeToSleepSeconds int) {
 	time.Sleep(time.Duration(timeToSleepSeconds) * time.Second)
 	for _, node := range nodes {
-		println(fmt.Sprintf("check node for batch sync: %s", node.Alias))
 		settlementLines, err := node.GetSettlementLines(equivalent)
 		if err != nil {
 			t.Fatalf("failed to get settlement lines: %v", err)
 		}
-		println(fmt.Sprintf("settlement lines: %+v", settlementLines))
 		for _, settlementLine := range settlementLines {
 			var targetNode *Node
 			for _, otherNode := range nodes {
@@ -547,7 +625,6 @@ func CheckSettlementLineForSyncBatch(t *testing.T, nodes []*Node, equivalent str
 			if targetNode == nil {
 				t.Fatalf("target node not found for settlement line: %+v", settlementLine)
 			}
-			println(fmt.Sprintf("check target node for batch sync: %s", targetNode.Alias))
 			node.CheckSettlementLineForSync(t, targetNode, equivalent)
 		}
 	}
@@ -555,7 +632,7 @@ func CheckSettlementLineForSyncBatch(t *testing.T, nodes []*Node, equivalent str
 
 func (n *Node) SettlementLineKeysSharing(t *testing.T, targetNode *Node, equivalent string) {
 	// Step 1: Get contractor_id (channel_id) for the target node
-	channelInfo, err := n.GetChannelInfo(targetNode)
+	channelInfo, err := n.GetChannelInfoByAddress(targetNode)
 	if err != nil {
 		t.Fatalf("failed to get channel info: %v", err)
 	}
@@ -745,7 +822,7 @@ func (n *Node) CheckMaxFlowBatch(t *testing.T, checks []MaxFlowBatchCheck, equiv
 	}
 }
 
-func (n *Node) SetTestingFlag(flag uint32, appliableNodeAddress string, appliableAmount string) error {
+func (n *Node) SetTestingFlag(flag uint64, appliableNodeAddress string, appliableAmount string) error {
 	url := fmt.Sprintf("http://%s:%d/api/v1/node/subsystems-controller/%d/?forbidden_address=%s&forbidden_amount=%s",
 		n.IPAddress, n.CLIPortTest, flag, appliableNodeAddress, appliableAmount)
 
@@ -767,7 +844,7 @@ func (n *Node) SetTestingFlag(flag uint32, appliableNodeAddress string, appliabl
 	return nil
 }
 
-func (n *Node) SetTestingSLFlag(flag uint32, firstParam, secondParam, thirdParam string) error {
+func (n *Node) SetTestingSLFlag(flag uint64, firstParam, secondParam, thirdParam string) error {
 	url := fmt.Sprintf("http://%s:%d/api/v1/node/settlement-lines-influence/%d/?first_parameter=%s&second_parameter=%s&third_parameter=%s",
 		n.IPAddress, n.CLIPortTest, flag, firstParam, secondParam, thirdParam)
 
@@ -990,7 +1067,7 @@ func (n *Node) CheckSettlementLineState(t *testing.T, targetNode *Node, equivale
 	// First, get contractor_id (channel_id) for the target node, as this is used in the trust_lines table.
 	// This assumes that a channel must exist for a trust line to exist, which is typical.
 	// If trust lines can exist without a channel, this part needs adjustment or contractor_id must be passed directly.
-	channelInfo, err := n.GetChannelInfo(targetNode)
+	channelInfo, err := n.GetChannelInfoByAddress(targetNode)
 	if err != nil {
 		t.Fatalf("Node %s: Failed to get channel info for target %s to find contractor_id: %v", n.Alias, targetNode.Alias, err)
 	}
@@ -1080,7 +1157,7 @@ func (n *Node) CheckCurrentAudit(t *testing.T, targetNode *Node, equivalent stri
 		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
 	}
 
-	channelInfo, err := n.GetChannelInfo(targetNode)
+	channelInfo, err := n.GetChannelInfoByAddress(targetNode)
 	if err != nil {
 		t.Fatalf("Node %s: Failed to get channel info for target %s to find contractor_id for audit check: %v", n.Alias, targetNode.Alias, err)
 	}
@@ -1222,4 +1299,302 @@ func (n *Node) CheckSettlementLineKeysPresence(t *testing.T, targetNode *Node, i
 		t.Fatalf("Node %s: Contractor keys presence mismatch. Expected: %s, Got: %s",
 			n.Alias, expectedContractorKeysPresent, settlementLineInfo.ContractorKeysPresent)
 	}
+}
+
+func (n *Node) MakeHub(equivalent string) error {
+	if n.ContainerID == "" {
+		return fmt.Errorf("Node %s: ContainerID is not set, cannot execute commands", n.Alias)
+	}
+
+	configFilePath := "/vtcp/vtcpd/conf.json"
+
+	// First, check if the config file exists and create it if it doesn't
+	checkCmd := []string{"exec", n.ContainerID, "sh", "-c",
+		fmt.Sprintf("[ -f %s ] && echo 'exists' || echo 'not_exists'", configFilePath)}
+	checkCmdExec := exec.Command("docker", checkCmd...)
+	checkOutput, err := checkCmdExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to check config file existence: %v. Output: %s", n.Alias, err, string(checkOutput))
+	}
+
+	var config map[string]interface{}
+
+	if strings.TrimSpace(string(checkOutput)) == "exists" {
+		// Read the existing conf.json file from the container
+		readCmd := []string{"exec", n.ContainerID, "cat", configFilePath}
+		readCmdExec := exec.Command("docker", readCmd...)
+		output, err := readCmdExec.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Node %s: failed to read config file: %v. Output: %s", n.Alias, err, string(output))
+		}
+
+		// Parse the existing JSON
+		if err := json.Unmarshal(output, &config); err != nil {
+			return fmt.Errorf("Node %s: failed to parse existing config JSON: %v", n.Alias, err)
+		}
+	} else {
+		// Create a minimal config structure
+		config = make(map[string]interface{})
+	}
+
+	// Add the gateway configuration
+	config["gateway"] = []string{equivalent}
+
+	// Convert back to JSON with proper formatting
+	updatedJSON, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to marshal updated config: %v", n.Alias, err)
+	}
+
+	// Create directory if needed and write the updated JSON using a safer method
+	createDirCmd := []string{"exec", n.ContainerID, "mkdir", "-p", "/vtcp/vtcpd"}
+	createDirExec := exec.Command("docker", createDirCmd...)
+	createDirExec.CombinedOutput() // Ignore errors - directory might already exist
+
+	// Use printf instead of echo to handle special characters better
+	// Escape the JSON content to avoid shell interpretation issues
+	escapedJSON := strings.ReplaceAll(string(updatedJSON), "'", "'\"'\"'")
+	shellCommand := fmt.Sprintf("printf '%%s' '%s' > %s", escapedJSON, configFilePath)
+	writeCmd := []string{"exec", n.ContainerID, "sh", "-c", shellCommand}
+	writeCmdExec := exec.Command("docker", writeCmd...)
+	writeOutput, err := writeCmdExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to write updated config file: %v. Output: %s", n.Alias, err, string(writeOutput))
+	}
+
+	// Verify the file was written correctly
+	verifyCmd := []string{"exec", n.ContainerID, "cat", configFilePath}
+	verifyCmdExec := exec.Command("docker", verifyCmd...)
+	verifyOutput, err := verifyCmdExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to verify config file: %v. Output: %s", n.Alias, err, string(verifyOutput))
+	}
+
+	// Restart the container to apply configuration changes
+	// restartCmd := []string{"restart", n.ContainerID}
+	// restartCmdExec := exec.Command("docker", restartCmd...)
+	// restartOutput, err := restartCmdExec.CombinedOutput()
+	// if err != nil {
+	// 	return fmt.Errorf("Node %s: failed to restart container: %v. Output: %s", n.Alias, err, string(restartOutput))
+	// }
+	// time.Sleep(2 * time.Second)
+
+	return nil
+}
+
+// RestartNode stops the current CLI process and restarts it in the background
+func (n *Node) RestartNode() error {
+	if n.ContainerID == "" {
+		return fmt.Errorf("Node %s: ContainerID is not set, cannot execute commands", n.Alias)
+	}
+
+	// First, find all CLI processes and their PIDs
+	findCmd := []string{"exec", n.ContainerID, "sh", "-c", "ps aux | grep 'cli start-http' | grep -v grep"}
+	findCmdExec := exec.Command("docker", findCmd...)
+	findOutput, _ := findCmdExec.CombinedOutput()
+	println("Current CLI processes:", string(findOutput))
+
+	// Stop all CLI processes except PID 1 (if it's PID 1)
+	stopCmd := []string{"exec", n.ContainerID, "sh", "-c",
+		`for pid in $(pgrep -f "cli start-http"); do
+			if [ "$pid" != "1" ]; then
+				echo "Killing CLI process PID: $pid"
+				kill -TERM $pid
+				sleep 1
+				# Force kill if still running
+				if kill -0 $pid 2>/dev/null; then
+					echo "Force killing PID: $pid"
+					kill -KILL $pid
+				fi
+			else
+				echo "Skipping PID 1"
+			fi
+		done`}
+	stopCmdExec := exec.Command("docker", stopCmd...)
+	stopOutput, _ := stopCmdExec.CombinedOutput()
+	println("Stop processes output:", string(stopOutput))
+
+	// Wait for processes to stop
+	time.Sleep(2 * time.Second)
+
+	// Verify no CLI processes are running (except possibly PID 1)
+	checkCmd := []string{"exec", n.ContainerID, "sh", "-c", "pgrep -f 'cli start-http' || echo 'No CLI processes found'"}
+	checkCmdExec := exec.Command("docker", checkCmd...)
+	checkOutput, _ := checkCmdExec.CombinedOutput()
+	println("Remaining processes:", string(checkOutput))
+
+	// Start new CLI process in background
+	startCommand := "cd /vtcp && nohup ./cli start-http > /tmp/cli.log 2>&1 &"
+	startCmd := []string{"exec", "-d", n.ContainerID, "sh", "-c", startCommand}
+	startCmdExec := exec.Command("docker", startCmd...)
+	startOutput, err := startCmdExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to start CLI process: %v. Output: %s", n.Alias, err, string(startOutput))
+	}
+
+	// Wait for the process to stabilize and verify it's running
+	time.Sleep(3 * time.Second)
+
+	// Verify new process is running
+	verifyCmd := []string{"exec", n.ContainerID, "sh", "-c", "ps aux | grep 'cli start-http' | grep -v grep"}
+	verifyCmdExec := exec.Command("docker", verifyCmd...)
+	verifyOutput, _ := verifyCmdExec.CombinedOutput()
+	println("New CLI processes:", string(verifyOutput))
+
+	err = n.RestartNode()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to restart node: %v", n.Alias, err)
+	}
+
+	return nil
+}
+
+// SetHopsCount sets or updates the max_hops_count field in the node's configuration file
+func (n *Node) SetHopsCount(hopsCount int) error {
+	if n.ContainerID == "" {
+		return fmt.Errorf("Node %s: ContainerID is not set, cannot execute commands", n.Alias)
+	}
+
+	configFilePath := "/vtcp/vtcpd/conf.json"
+
+	// First, check if the config file exists and create it if it doesn't
+	checkCmd := []string{"exec", n.ContainerID, "sh", "-c",
+		fmt.Sprintf("[ -f %s ] && echo 'exists' || echo 'not_exists'", configFilePath)}
+	checkCmdExec := exec.Command("docker", checkCmd...)
+	checkOutput, err := checkCmdExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to check config file existence: %v. Output: %s", n.Alias, err, string(checkOutput))
+	}
+
+	var config map[string]interface{}
+
+	if strings.TrimSpace(string(checkOutput)) == "exists" {
+		// Read the existing conf.json file from the container
+		readCmd := []string{"exec", n.ContainerID, "cat", configFilePath}
+		readCmdExec := exec.Command("docker", readCmd...)
+		output, err := readCmdExec.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Node %s: failed to read config file: %v. Output: %s", n.Alias, err, string(output))
+		}
+
+		// Parse the existing JSON
+		if err := json.Unmarshal(output, &config); err != nil {
+			return fmt.Errorf("Node %s: failed to parse existing config JSON: %v", n.Alias, err)
+		}
+	} else {
+		// Create a minimal config structure
+		config = make(map[string]interface{})
+	}
+
+	// Set or update the max_hops_count configuration
+	config["max_hops_count"] = hopsCount
+
+	// Convert back to JSON with proper formatting
+	updatedJSON, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to marshal updated config: %v", n.Alias, err)
+	}
+
+	// Create directory if needed and write the updated JSON using a safer method
+	createDirCmd := []string{"exec", n.ContainerID, "mkdir", "-p", "/vtcp/vtcpd"}
+	createDirExec := exec.Command("docker", createDirCmd...)
+	createDirExec.CombinedOutput() // Ignore errors - directory might already exist
+
+	// Use printf instead of echo to handle special characters better
+	// Escape the JSON content to avoid shell interpretation issues
+	escapedJSON := strings.ReplaceAll(string(updatedJSON), "'", "'\"'\"'")
+	shellCommand := fmt.Sprintf("printf '%%s' '%s' > %s", escapedJSON, configFilePath)
+	writeCmd := []string{"exec", n.ContainerID, "sh", "-c", shellCommand}
+	writeCmdExec := exec.Command("docker", writeCmd...)
+	writeOutput, err := writeCmdExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to write updated config file: %v. Output: %s", n.Alias, err, string(writeOutput))
+	}
+
+	// Verify the file was written correctly
+	verifyCmd := []string{"exec", n.ContainerID, "cat", configFilePath}
+	verifyCmdExec := exec.Command("docker", verifyCmd...)
+	verifyOutput, err := verifyCmdExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to verify config file: %v. Output: %s", n.Alias, err, string(verifyOutput))
+	}
+
+	err = n.RestartNode()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to restart node: %v", n.Alias, err)
+	}
+
+	return nil
+}
+
+// HistoryAdditionalPayments retrieves additional payment history for the node
+func (n *Node) HistoryAdditionalPayments(t *testing.T) map[string]interface{} {
+	url := fmt.Sprintf("http://%s:%d/api/v1/node/history/transactions/payments/additional/0/10/1/",
+		n.IPAddress, n.CLIPort)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatalf("failed to send history additional payments request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("history additional payments request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode history additional payments response: %v", err)
+	}
+
+	return result
+}
+
+// HistoryPayments retrieves payment history for the node
+func (n *Node) HistoryPayments(t *testing.T) map[string]interface{} {
+	url := fmt.Sprintf("http://%s:%d/api/v1/node/history/transactions/payments/0/10/1/",
+		n.IPAddress, n.CLIPort)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatalf("failed to send history payments request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("history payments request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode history payments response: %v", err)
+	}
+
+	return result
+}
+
+// HistoryPaymentsAllEquivalents retrieves payment history for all equivalents
+func (n *Node) HistoryPaymentsAllEquivalents(t *testing.T) map[string]interface{} {
+	url := fmt.Sprintf("http://%s:%d/api/v1/node/history/transactions/payments-all/0/10/",
+		n.IPAddress, n.CLIPort)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatalf("failed to send history payments all equivalents request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("history payments all equivalents request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode history payments all equivalents response: %v", err)
+	}
+
+	return result
 }

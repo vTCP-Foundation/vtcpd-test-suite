@@ -371,8 +371,8 @@ func TestSettlementLineKeysSharingInitExceptionOnInitFirstKeyStage(t *testing.T)
 
 	// Python: self.node_A.set_TL_debug_flag(2048, self.sourceTransactionType, 1)
 	// sourceTransactionType for this suite is 104 (SettlementLinePublicKeyMessageType)
-	// Flag 2048 is TestFlagExceptionOnInitTAModifyingStage
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
+	// Flag 2048 is FlagThrowExceptionPreviousNeighborRequest
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -393,7 +393,7 @@ func TestSettlementLineKeysSharingInitIOExceptionOnInitFirstKeyStage(t *testing.
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// Python: self.node_A.set_TL_debug_flag(2048, self.sourceTransactionType, 2) -> IO Exception
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "2", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -413,12 +413,10 @@ func TestSettlementLineKeysSharingInitExceptionOnInitNextKeyStage(t *testing.T) 
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// Python: self.node_A.set_TL_debug_flag(2048, self.sourceTransactionType, 1)
-	// Flag 2048 for "next key stage" seems to be TestFlagExceptionOnInitTAResponseProcessingStage or TestFlagExceptionOnInitTAResumingStage based on open_sl tests.
-	// However, the python test uses 2048, which is TestFlagExceptionOnInitTAModifyingStage.
-	// This might indicate the "first_key_stage" and "next_key_stage" might be differentiated by *when* the flag is set or by a different internal condition.
-	// For now, using the literal flag from python test: TestFlagExceptionOnInitTAModifyingStage
-	// The difference might be subtle, for example, if the "modifying stage" for keys happens multiple times.
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0") // Assuming it's still modifying stage, but for a subsequent key.
+	// Flag 2048 for "next key stage" seems to be FlagThrowExceptionCoordinatorRequest or FlagThrowExceptionNextNeighborResponse based on open_sl tests.
+	// However, the python test uses 2048, which is FlagThrowExceptionPreviousNeighborRequest.
+	// For now, using the literal flag from python test: FlagThrowExceptionPreviousNeighborRequest
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "1", "0") // Assuming it's still modifying stage, but for a subsequent key.
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -441,7 +439,7 @@ func TestSettlementLineKeysSharingInitIOExceptionOnInitNextKeyStage(t *testing.T
 	nodes, _ := setupNodesForKeysSharingInitSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagExceptionOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "2", "0") // IO Exception
+	err := nodeA.SetTestingSLFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "2", "0") // IO Exception
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -466,13 +464,13 @@ func TestSettlementLineKeysSharingInitExceptionOnContractorFirstKeyStage(t *test
 
 	// Python: self.node_B.set_TL_debug_flag(2048, self.targetTransactionType, 1)
 	// targetTransactionType for this suite is 105 (SettlementLinePublicKeyResponseMessageType)
-	// Flag 2048 is TestFlagExceptionOnInitTAModifyingStage for *initiator*. For *contractor*, it's TestFlagExceptionOnContractorTAStage (16384)
+	// Flag 2048 is FlagThrowExceptionPreviousNeighborRequest for *initiator*. For *contractor*, it's FlagThrowExceptionVote (16384)
 	// The python test seems to use the initiator's "modifying stage" flag number (2048) for the contractor.
 	// This could be an oversight in the python test or a specific behavior of the debug flag.
-	// Let's try with TestFlagExceptionOnContractorTAStage (16384) first as it's specific to contractor.
+	// Let's try with FlagThrowExceptionVote (16384) first as it's specific to contractor.
 	// If that doesn't match behavior, might need to use 2048 if the system truly uses that flag value contextually.
 	// Python message type used is targetTransactionType = 105
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
+	err := nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionVote, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
 	}
@@ -495,7 +493,7 @@ func TestSettlementLineKeysSharingInitIOExceptionOnContractorFirstKeyStage(t *te
 	nodes, _ := setupNodesForKeysSharingInitSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0") // IO Exception
+	err := nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionVote, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0") // IO Exception
 	if err != nil {
 		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
 	}
@@ -519,8 +517,8 @@ func TestSettlementLineKeysSharingInitExceptionOnContractorNextKeyStage(t *testi
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// Python: self.node_B.set_TL_debug_flag(16384, self.targetTransactionType, 1)
-	// Flag 16384 is TestFlagExceptionOnContractorTAStage. targetTransactionType is 105.
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
+	// Flag 16384 is FlagThrowExceptionVote. targetTransactionType is 105.
+	err := nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionVote, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
 	}
@@ -543,7 +541,7 @@ func TestSettlementLineKeysSharingInitIOExceptionOnContractorNextKeyStage(t *tes
 	nodes, _ := setupNodesForKeysSharingInitSettlementLineTest(t, 2)
 	nodeA, nodeB := nodes[0], nodes[1]
 
-	err := nodeB.SetTestingSLFlag(vtcp.TestFlagExceptionOnContractorTAStage, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0") // IO Exception
+	err := nodeB.SetTestingSLFlag(vtcp.FlagThrowExceptionVote, vtcp.SettlementLinePublicKeyResponseMessageType, "2", "0") // IO Exception
 	if err != nil {
 		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
 	}
@@ -568,9 +566,8 @@ func TestSettlementLineKeysSharingInitTerminateOnInitFirstKeyStage(t *testing.T)
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// Python: self.node_A.set_TL_debug_flag(2097152, self.sourceTransactionType, 1)
-	// Flag 2097152 is TestFlagTerminateOnInitTAModifyingStage
-	// sourceTransactionType for keys init suite is 104 (SettlementLinePublicKeyMessageType)
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
+	// Flag 2097152 is FlagTerminateProcessPreviousNeighborRequest
+	err := nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -596,7 +593,7 @@ func TestSettlementLineKeysSharingInitTerminateAfterInitFirstKeyStage(t *testing
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// Python: self.node_A.set_TL_debug_flag(2097152, self.sourceTransactionType, 1) -> Same as "on" stage
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAModifyingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -616,8 +613,8 @@ func TestSettlementLineKeysSharingInitTerminateOnInitNextKeyStage(t *testing.T) 
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// Python: self.node_A.set_TL_debug_flag(4194304, self.sourceTransactionType, 1)
-	// Flag 4194304 is TestFlagTerminateOnInitTAResponseProcessingStage
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResponseProcessingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
+	// Flag 4194304 is FlagTerminateProcessCoordinatorRequest
+	err := nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessCoordinatorRequest, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -641,7 +638,7 @@ func TestSettlementLineKeysSharingInitTerminateAfterInitNextKeyStage(t *testing.
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// Python: self.node_A.set_TL_debug_flag(4194304, self.sourceTransactionType, 1) -> Same as "on" stage
-	err := nodeA.SetTestingSLFlag(vtcp.TestFlagTerminateOnInitTAResponseProcessingStage, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
+	err := nodeA.SetTestingSLFlag(vtcp.FlagTerminateProcessCoordinatorRequest, vtcp.SettlementLinePublicKeyMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeA failed to set testing SL flag: %v", err)
 	}
@@ -665,9 +662,7 @@ func TestSettlementLineKeysSharingInitTerminateOnContractorFirstKeyStage(t *test
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// Python: self.node_B.set_TL_debug_flag(2097152, self.targetTransactionType, 1)
-	// Flag 2097152 is TestFlagTerminateOnInitTAModifyingStage. For contractor, should be TestFlagTerminateOnContractorTAStage (16777216)
-	// targetTransactionType is 105 (SettlementLinePublicKeyResponseMessageType)
-	// Using the contractor specific termination flag.
+	// Flag 2097152 is FlagTerminateProcessPreviousNeighborRequest. For contractor, should be FlagTerminateProcessVote (16777216)
 	err := nodeB.SetTestingSLFlag(vtcp.FlagTerminateProcessVote, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeB failed to set testing SL flag: %v", err)
@@ -719,7 +714,7 @@ func TestSettlementLineKeysSharingInitTerminateOnContractorNextKeyStage(t *testi
 	nodeA, nodeB := nodes[0], nodes[1]
 
 	// Python: self.node_B.set_TL_debug_flag(16777216, self.targetTransactionType, 1)
-	// Flag 16777216 is TestFlagTerminateOnContractorTAStage
+	// Flag 16777216 is FlagTerminateProcessVote
 	err := nodeB.SetTestingSLFlag(vtcp.FlagTerminateProcessVote, vtcp.SettlementLinePublicKeyResponseMessageType, "1", "0")
 	if err != nil {
 		t.Fatalf("NodeB failed to set testing SL flag: %v", err)

@@ -33,12 +33,12 @@ func TestMaxFlowThrough6Hops(t *testing.T) {
 	node4.OpenChannelAndCheck(t, node5)
 	node6.OpenChannelAndCheck(t, node7)
 
-	node2.CreateSettlementLineAndCheck(t, node1, testconfig.Equivalent, "1000")
-	node3.CreateSettlementLineAndCheck(t, node2, testconfig.Equivalent, "800")
-	node4.CreateSettlementLineAndCheck(t, node3, testconfig.Equivalent, "900")
-	node5.CreateSettlementLineAndCheck(t, node4, testconfig.Equivalent, "700")
-	node6.CreateSettlementLineAndCheck(t, node5, testconfig.Equivalent, "900")
-	node7.CreateSettlementLineAndCheck(t, node6, testconfig.Equivalent, "1000")
+	node2.CreateAndSetSettlementLineAndCheck(t, node1, testconfig.Equivalent, "1000")
+	node3.CreateAndSetSettlementLineAndCheck(t, node2, testconfig.Equivalent, "800")
+	node4.CreateAndSetSettlementLineAndCheck(t, node3, testconfig.Equivalent, "900")
+	node5.CreateAndSetSettlementLineAndCheck(t, node4, testconfig.Equivalent, "700")
+	node6.CreateAndSetSettlementLineAndCheck(t, node5, testconfig.Equivalent, "900")
+	node7.CreateAndSetSettlementLineAndCheck(t, node6, testconfig.Equivalent, "1000")
 
 	node1.CheckMaxFlow(t, node7, testconfig.Equivalent, "700")
 

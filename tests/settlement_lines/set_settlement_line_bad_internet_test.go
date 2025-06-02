@@ -35,7 +35,7 @@ func setupNodesForSetSettlementLineBadInternetTest(t *testing.T, count int) ([]*
 
 	cluster.RunNodes(ctx, t, nodes)
 	nodes[0].OpenChannelAndCheck(t, nodes[1])
-	nodes[0].CreateSettlementLineAndCheck(t, nodes[1], testconfig.Equivalent, "1000")
+	nodes[0].CreateAndSetSettlementLineAndCheck(t, nodes[1], testconfig.Equivalent, "1000")
 
 	return nodes, cluster
 }
@@ -88,7 +88,7 @@ func TestSetSettlementLine256kbBandwidthInitiatorNode(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -115,7 +115,7 @@ func TestSetSettlementLine256kbBandwidthContractorNode(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -146,7 +146,7 @@ func TestSetSettlementLine256kbBandwidthBothNodes(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -173,7 +173,7 @@ func TestSetSettlementLine10PercentPacketLossInitiatorNode(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -200,7 +200,7 @@ func TestSetSettlementLine10PercentPacketLossContractorNode(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -231,7 +231,7 @@ func TestSetSettlementLine10PercentPacketLossBothNodes(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -258,7 +258,7 @@ func TestSetSettlementLine10PercentPacketCorruptionInitiatorNode(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -285,7 +285,7 @@ func TestSetSettlementLine10PercentPacketCorruptionContractorNode(t *testing.T) 
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -316,7 +316,7 @@ func TestSetSettlementLine10PercentPacketCorruptionBothNodes(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -337,13 +337,14 @@ func TestSetSettlementLine10PercentPacketReorderingInitiatorNode(t *testing.T) {
 	// Configure network conditions with 10% packet reordering
 	conditions := &vtcp.NetworkConditions{
 		ReorderPercent: 10.0,
+		DelayMs:        10,
 	}
 	err := cluster.ConfigureNetworkConditions(nodeA, conditions, "eth0")
 	if err != nil {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -364,13 +365,14 @@ func TestSetSettlementLine10PercentPacketReorderingContractorNode(t *testing.T) 
 	// Configure network conditions with 10% packet reordering
 	conditions := &vtcp.NetworkConditions{
 		ReorderPercent: 10.0,
+		DelayMs:        10,
 	}
 	err := cluster.ConfigureNetworkConditions(nodeB, conditions, "eth0")
 	if err != nil {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -391,6 +393,7 @@ func TestSetSettlementLine10PercentPacketReorderingBothNodes(t *testing.T) {
 	// Configure network conditions with 10% packet reordering
 	conditions := &vtcp.NetworkConditions{
 		ReorderPercent: 10.0,
+		DelayMs:        10,
 	}
 	err := cluster.ConfigureNetworkConditions(nodeA, conditions, "eth0")
 	if err != nil {
@@ -401,7 +404,7 @@ func TestSetSettlementLine10PercentPacketReorderingBothNodes(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -428,7 +431,7 @@ func TestSetSettlementLine10PercentPacketDublicationInitiatorNode(t *testing.T) 
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -455,7 +458,7 @@ func TestSetSettlementLine10PercentPacketDublicationContractorNode(t *testing.T)
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -486,7 +489,7 @@ func TestSetSettlementLine10PercentPacketDublicationBothNodes(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -514,7 +517,7 @@ func TestSetSettlementLine200msDelayInitiatorNode(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -542,7 +545,7 @@ func TestSetSettlementLine200msDelayContractorNode(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
@@ -574,7 +577,7 @@ func TestSetSettlementLine200msDelayBothNodes(t *testing.T) {
 		t.Fatalf("failed to configure network conditions: %v", err)
 	}
 
-	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000")
+	nodeA.SetSettlementLine(t, nodeB, testconfig.Equivalent, "2000", vtcp.StatusOK)
 
 	waitSetSettlementLineActive(t, nodeA, nodeB)
 
