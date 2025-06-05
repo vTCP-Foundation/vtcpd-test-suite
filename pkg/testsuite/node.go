@@ -1370,83 +1370,101 @@ func (n *Node) MakeHub(equivalent string) error {
 		return fmt.Errorf("Node %s: failed to verify config file: %v. Output: %s", n.Alias, err, string(verifyOutput))
 	}
 
-	// Restart the container to apply configuration changes
-	// restartCmd := []string{"restart", n.ContainerID}
-	// restartCmdExec := exec.Command("docker", restartCmd...)
-	// restartOutput, err := restartCmdExec.CombinedOutput()
-	// if err != nil {
-	// 	return fmt.Errorf("Node %s: failed to restart container: %v. Output: %s", n.Alias, err, string(restartOutput))
-	// }
-	// time.Sleep(2 * time.Second)
-
-	return nil
-}
-
-// RestartNode stops the current CLI process and restarts it in the background
-func (n *Node) RestartNode() error {
-	if n.ContainerID == "" {
-		return fmt.Errorf("Node %s: ContainerID is not set, cannot execute commands", n.Alias)
-	}
-
-	// First, find all CLI processes and their PIDs
-	findCmd := []string{"exec", n.ContainerID, "sh", "-c", "ps aux | grep 'cli start-http' | grep -v grep"}
-	findCmdExec := exec.Command("docker", findCmd...)
-	findOutput, _ := findCmdExec.CombinedOutput()
-	println("Current CLI processes:", string(findOutput))
-
-	// Stop all CLI processes except PID 1 (if it's PID 1)
-	stopCmd := []string{"exec", n.ContainerID, "sh", "-c",
-		`for pid in $(pgrep -f "cli start-http"); do
-			if [ "$pid" != "1" ]; then
-				echo "Killing CLI process PID: $pid"
-				kill -TERM $pid
-				sleep 1
-				# Force kill if still running
-				if kill -0 $pid 2>/dev/null; then
-					echo "Force killing PID: $pid"
-					kill -KILL $pid
-				fi
-			else
-				echo "Skipping PID 1"
-			fi
-		done`}
-	stopCmdExec := exec.Command("docker", stopCmd...)
-	stopOutput, _ := stopCmdExec.CombinedOutput()
-	println("Stop processes output:", string(stopOutput))
-
-	// Wait for processes to stop
-	time.Sleep(2 * time.Second)
-
-	// Verify no CLI processes are running (except possibly PID 1)
-	checkCmd := []string{"exec", n.ContainerID, "sh", "-c", "pgrep -f 'cli start-http' || echo 'No CLI processes found'"}
-	checkCmdExec := exec.Command("docker", checkCmd...)
-	checkOutput, _ := checkCmdExec.CombinedOutput()
-	println("Remaining processes:", string(checkOutput))
-
-	// Start new CLI process in background
-	startCommand := "cd /vtcp && nohup ./cli start-http > /tmp/cli.log 2>&1 &"
-	startCmd := []string{"exec", "-d", n.ContainerID, "sh", "-c", startCommand}
-	startCmdExec := exec.Command("docker", startCmd...)
-	startOutput, err := startCmdExec.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Node %s: failed to start CLI process: %v. Output: %s", n.Alias, err, string(startOutput))
-	}
-
-	// Wait for the process to stabilize and verify it's running
-	time.Sleep(3 * time.Second)
-
-	// Verify new process is running
-	verifyCmd := []string{"exec", n.ContainerID, "sh", "-c", "ps aux | grep 'cli start-http' | grep -v grep"}
-	verifyCmdExec := exec.Command("docker", verifyCmd...)
-	verifyOutput, _ := verifyCmdExec.CombinedOutput()
-	println("New CLI processes:", string(verifyOutput))
-
 	err = n.RestartNode()
 	if err != nil {
 		return fmt.Errorf("Node %s: failed to restart node: %v", n.Alias, err)
 	}
 
 	return nil
+}
+
+// RestartNode stops the vtcpd process, allowing CLI to restart it with new configuration
+func (n *Node) RestartNode() error {
+	if n.ContainerID == "" {
+		return fmt.Errorf("Node %s: ContainerID is not set, cannot execute commands", n.Alias)
+	}
+
+	println("=== RestartNode: Starting vtcpd restart process ===")
+
+	// Step 1: Get full process list to understand what's running
+	allProcessesCmd := []string{"exec", n.ContainerID, "ps", "aux"}
+	allProcessesExec := exec.Command("docker", allProcessesCmd...)
+	_, _ = allProcessesExec.CombinedOutput()
+
+	// Step 2: Find vtcpd processes using pgrep
+	findCmd := []string{"exec", n.ContainerID, "pgrep", "vtcpd"}
+	findExec := exec.Command("docker", findCmd...)
+	findOutput, err := findExec.CombinedOutput()
+
+	if err != nil {
+		println("No vtcpd processes found to stop")
+		return fmt.Errorf("Node %s: No vtcpd processes found", n.Alias)
+	}
+
+	vtcpdPids := strings.Fields(strings.TrimSpace(string(findOutput)))
+	if len(vtcpdPids) == 0 {
+		println("No vtcpd processes found to stop")
+		return fmt.Errorf("Node %s: No vtcpd processes found", n.Alias)
+	}
+
+	// Step 3: Stop vtcpd processes gracefully
+	for _, pid := range vtcpdPids {
+		killCmd := []string{"exec", n.ContainerID, "kill", "-TERM", pid}
+		killExec := exec.Command("docker", killCmd...)
+		_, _ = killExec.CombinedOutput()
+	}
+
+	// Wait for graceful shutdown
+	time.Sleep(3 * time.Second)
+
+	// Check if processes are still running
+	checkCmd := []string{"exec", n.ContainerID, "pgrep", "vtcpd"}
+	checkExec := exec.Command("docker", checkCmd...)
+	checkOutput, checkErr := checkExec.CombinedOutput()
+
+	if checkErr == nil && strings.TrimSpace(string(checkOutput)) != "" {
+		println("Some vtcpd processes still running, using SIGKILL...")
+
+		// Force kill remaining processes
+		for _, pid := range vtcpdPids {
+			forceKillCmd := []string{"exec", n.ContainerID, "kill", "-KILL", pid}
+			forceKillExec := exec.Command("docker", forceKillCmd...)
+			_, _ = forceKillExec.CombinedOutput()
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	// Verify all vtcpd processes are stopped
+	verifyStoppedCmd := []string{"exec", n.ContainerID, "pgrep", "vtcpd"}
+	verifyStoppedExec := exec.Command("docker", verifyStoppedCmd...)
+	_, verifyErr := verifyStoppedExec.CombinedOutput()
+
+	if verifyErr == nil {
+		println("Warning: Some vtcpd processes may still be running")
+	} else {
+		println("All vtcpd processes stopped successfully")
+	}
+
+	// Wait for CLI to restart vtcpd
+	println("Waiting for CLI to restart vtcpd with new configuration...")
+	for i := 0; i < 15; i++ {
+		time.Sleep(1 * time.Second)
+
+		checkRestartCmd := []string{"exec", n.ContainerID, "pgrep", "vtcpd"}
+		checkRestartExec := exec.Command("docker", checkRestartCmd...)
+		_, restartErr := checkRestartExec.CombinedOutput()
+
+		if restartErr == nil {
+			println(fmt.Sprintf("vtcpd restarted successfully after %d seconds", i+1))
+			println("=== RestartNode: vtcpd restart completed successfully ===")
+			return nil
+		}
+
+		println(fmt.Sprintf("Waiting for vtcpd restart... (%d/15)", i+1))
+	}
+
+	return fmt.Errorf("Node %s: vtcpd did not restart automatically within 15 seconds", n.Alias)
 }
 
 // SetHopsCount sets or updates the max_hops_count field in the node's configuration file

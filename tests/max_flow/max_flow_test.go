@@ -11,11 +11,11 @@ import (
 func TestMaxFlowThrough6Hops(t *testing.T) {
 	node1 := vtcp.NewNode(t, testconfig.StaticContainerIPPartForMaxFlowTest+"1", "node1")
 	node2 := vtcp.NewNode(t, testconfig.StaticContainerIPPartForMaxFlowTest+"2", "node2")
-	node3 := vtcp.NewNode(t, testconfig.StaticContainerIPPartForMaxFlowTest+"3", "node31")
+	node3 := vtcp.NewNode(t, testconfig.StaticContainerIPPartForMaxFlowTest+"3", "node3")
 	node4 := vtcp.NewNode(t, testconfig.StaticContainerIPPartForMaxFlowTest+"4", "node4")
 	node5 := vtcp.NewNode(t, testconfig.StaticContainerIPPartForMaxFlowTest+"5", "node5")
 	node6 := vtcp.NewNode(t, testconfig.StaticContainerIPPartForMaxFlowTest+"6", "node6")
-	node7 := vtcp.NewNode(t, testconfig.StaticContainerIPPartForMaxFlowTest+"7", "node72")
+	node7 := vtcp.NewNode(t, testconfig.StaticContainerIPPartForMaxFlowTest+"7", "node7")
 
 	ctx := context.Background()
 	cluster, err := vtcp.NewCluster(ctx, t, &testconfig.GSettings)
