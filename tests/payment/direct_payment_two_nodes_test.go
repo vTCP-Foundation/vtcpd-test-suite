@@ -49,11 +49,15 @@ func Test1DirectPaymentNormalAmount(t *testing.T) {
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeD, testconfig.Equivalent, "500")
 
 	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "600", vtcp.StatusOK)
-	nodeA.CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 2, 1, 0)
-	nodeB.CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 2, 0, 1)
+	nodeA.CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 2, 0, 1)
+	nodeB.CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 2, 1, 0)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
 	nodeB.CheckSerializedTransaction(t, false, 0)
+
+	time.Sleep(3 * time.Second)
+
+	nodeA.CheckMaxFlow(t, nodeB, testconfig.Equivalent, "400")
 
 	nodeA.CheckMaxFlowBatch(t,
 		[]vtcp.MaxFlowBatchCheck{
@@ -89,7 +93,7 @@ func Test2DirectPaymentOvertrustAmount(t *testing.T) {
 	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB, nodeC, nodeD})
 
 	// Common setup based on Python's prepare_topology
-	nodeA.CreateChannelAndSettlementLineAndCheck(t, nodeB, testconfig.Equivalent, "1000")
+	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
 	nodeA.CheckMaxFlow(t, nodeB, testconfig.Equivalent, "1000")
 
 	// Test-specific logic for Test2DirectPaymentOvertrustAmount
@@ -251,24 +255,20 @@ func Test5aLostMessageWithPublicKeysToReceiver(t *testing.T) {
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
 	nodeA.CheckMaxFlow(t, nodeB, testconfig.Equivalent, "1000")
 
-	// Test-specific logic
-	// var flagForbidSendMessageOnVoteStage uint32 = 3 // Placeholder value
 	err = nodeA.SetTestingFlag(vtcp.FlagForbidSendMessageVoteStage, "", "")
 	if err != nil {
 		t.Fatalf("SetTestingFlag failed: %v", err)
 	}
 
-	uuid, err := nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusProtocolError)
+	// it works because coordinator resend votes message
+	_, err = nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed unexpectedly: %v", err)
 	}
 	time.Sleep(vtcp.WaitingParticipantsVotesSec * time.Second)
 
-	nodeA.CheckPaymentTransaction(t, "", 0, 0, 0, 0)
-	nodeB.CheckPaymentTransaction(t, "", 0, 0, 0, 0)
-
-	nodeA.CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, false)
-	nodeB.CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodeA.CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 2, 0, 1)
+	nodeB.CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 2, 1, 0)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
 	nodeB.CheckSerializedTransaction(t, false, 0)

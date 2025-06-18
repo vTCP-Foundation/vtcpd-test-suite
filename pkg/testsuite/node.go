@@ -1338,7 +1338,11 @@ func (n *Node) MakeHub(equivalent string) error {
 	}
 
 	// Add the gateway configuration
-	config["gateway"] = []string{equivalent}
+	equivalentNum, err := strconv.Atoi(equivalent)
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to convert equivalent to integer for gateway config: %v", n.Alias, err)
+	}
+	config["gateway"] = []int{equivalentNum}
 
 	// Convert back to JSON with proper formatting
 	updatedJSON, err := json.MarshalIndent(config, "", "  ")

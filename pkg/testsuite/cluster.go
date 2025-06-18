@@ -112,13 +112,13 @@ func (c *Cluster) RunNode(ctx context.Context, t *testing.T, wg *sync.WaitGroup,
 	// Automatically stop and remove container when test finishes.
 	// Helps prevent boilerplate code in tests.
 	t.Cleanup(func() {
-		// secondsToWait := 5
-		// if err := c.cli.ContainerStop(c.ctx, resp.ID, container.StopOptions{Timeout: &secondsToWait}); err != nil {
-		// 	t.Logf("failed to stop container: %v", err)
-		// }
-		// if err := c.cli.ContainerRemove(c.ctx, resp.ID, container.RemoveOptions{}); err != nil {
-		// 	t.Logf("failed to remove container: %v", err)
-		// }
+		secondsToWait := 5
+		if err := c.cli.ContainerStop(c.ctx, resp.ID, container.StopOptions{Timeout: &secondsToWait}); err != nil {
+			t.Logf("failed to stop container: %v", err)
+		}
+		if err := c.cli.ContainerRemove(c.ctx, resp.ID, container.RemoveOptions{}); err != nil {
+			t.Logf("failed to remove container: %v", err)
+		}
 	})
 
 	return nil
