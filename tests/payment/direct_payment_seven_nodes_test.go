@@ -127,7 +127,7 @@ func Test4cLostAskRemoteNodeToApproveReservationMsgFromCoordinatorToLastIntermed
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_message_to_coordinator_on_reservation (New flag)
-	if err := node1.SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, node3.GetIpAndPort(), ""); err != nil {
+	if err := node1.SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, node3.GetIPAddressForRequests(), ""); err != nil {
 		t.Fatalf("SetTestingFlag failed for node1: %v", err)
 	}
 	node1.CreateTransactionCheckStatus(t, node7, testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)

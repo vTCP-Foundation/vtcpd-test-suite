@@ -85,7 +85,7 @@ const (
 
 	// Log Messages
 	LogMessageRecoveringLogMessage = "runVotesRecoveryParentStage"
-	DefaultOperationsLogPath       = "/vtcp/vtcpd/logs/operations.log"
+	DefaultOperationsLogPath       = "/vtcp/vtcpd/operations.log"
 )
 
 // Testing flags based on Python test suite debug flags
