@@ -6,6 +6,9 @@ RUN pacman -Syu --noconfirm && \
     boost \
     boost-libs \
     libsodium \
+    postgresql-libs \
+    postgresql \
+    gcc \
     sqlite && \
     # Debug library locations
     echo "Library locations:" && \
@@ -15,7 +18,9 @@ RUN pacman -Syu --noconfirm && \
     ldd /vtcpd/vtcpd || true
 
 # Create a non-root user for running the daemon
-RUN useradd -r -s /usr/bin/nologin vtcpd
+RUN useradd -r -s /usr/bin/nologin vtcpd && \
+    # Create postgres user for database operations
+    useradd -r -s /bin/bash postgres || true
 
 
 ###################################################################################
@@ -27,10 +32,18 @@ RUN apt-get update && \
     libboost-filesystem1.83.0 \
     libboost-program-options1.83.0 \
     libsodium23 \
+    libpq5 \
+    postgresql-16 \
+    postgresql-client-16 \
+    libasan8 \
     vim \
     sqlite3 && \
+    ln -s /usr/lib/postgresql/*/bin/pg_ctl /usr/local/bin/pg_ctl && \
+    ln -s /usr/lib/postgresql/*/bin/initdb /usr/local/bin/initdb && \
     rm -rf /var/lib/apt/lists/* && \
-    useradd -r -s /usr/sbin/nologin vtcpd
+    useradd -r -s /usr/sbin/nologin vtcpd && \
+    # Create postgres user for database operations
+    useradd -r -s /bin/bash postgres || true
 
 
 ###################################################################################
@@ -45,6 +58,10 @@ RUN mkdir -p vtcpd
 # Copy pre-built binaries from host
 COPY ./deps/vtcpd /vtcpd/
 COPY ./deps/cli/cli /vtcpd/cli
+COPY ./docker-entrypoint-initdb.sh /docker-entrypoint-initdb.sh
+COPY ./start-postgres.sh /usr/local/bin/start-postgres.sh
+RUN chmod +x /docker-entrypoint-initdb.sh
+RUN chmod +x /usr/local/bin/start-postgres.sh
 
 # Define build arguments and convert them to runtime environment variables
 ARG VTCPD_LISTEN_ADDRESS=127.0.0.1
@@ -54,6 +71,7 @@ ARG VTCPD_MAX_HOPS=5
 ARG CLI_LISTEN_ADDRESS=127.0.0.1
 ARG CLI_LISTEN_PORT=3000
 ARG CLI_LISTEN_PORT_TESTING=3001
+ARG VTCPD_DATABASE_CONFIG=sqlite3:///io
 
 ENV VTCPD_LISTEN_ADDRESS=${VTCPD_LISTEN_ADDRESS}
 ENV VTCPD_LISTEN_PORT=${VTCPD_LISTEN_PORT}
@@ -62,6 +80,7 @@ ENV VTCPD_MAX_HOPS=${VTCPD_MAX_HOPS}
 ENV CLI_LISTEN_ADDRESS=${CLI_LISTEN_ADDRESS}
 ENV CLI_LISTEN_PORT=${CLI_LISTEN_PORT}
 ENV CLI_LISTEN_PORT_TESTING=${CLI_LISTEN_PORT_TESTING}
+ENV VTCPD_DATABASE_CONFIG=${VTCPD_DATABASE_CONFIG}
 
 # Create startup script that uses runtime environment variables
 RUN echo '#!/bin/bash\n\
@@ -75,6 +94,7 @@ cat <<EOF > /vtcp/vtcpd/conf.json\n\
       "address": "${VTCPD_LISTEN_ADDRESS}:${VTCPD_LISTEN_PORT}"\n\
     }\n\
   ],\n\
+  "database_config": "${VTCPD_DATABASE_CONFIG}",\n\
   "equivalents_registry_address": "${VTCPD_EQUIVALENTS_REGISTRY}",\n\
   "max_hops_count": ${VTCPD_MAX_HOPS}\n\
 }\n\
@@ -90,6 +110,17 @@ http_testing:\n\
   host: "${CLI_LISTEN_ADDRESS}"\n\
   port: ${CLI_LISTEN_PORT_TESTING}\n\
 EOF\n\
+# Initialize PostgreSQL if configured\n\
+if [[ "${VTCPD_DATABASE_CONFIG}" == *"postgresql"* ]]; then\n\
+  /docker-entrypoint-initdb.sh\n\
+  PGDATA=/var/lib/postgresql/data\n\
+  # Start PostgreSQL server using the dedicated script\n\
+  if command -v runuser &>/dev/null; then\n\
+      runuser -u postgres -- /usr/local/bin/start-postgres.sh\n\
+  else\n\
+      su - postgres -c /usr/local/bin/start-postgres.sh\n\
+  fi\n\
+fi\n\
 exec "$@"' > /docker-entrypoint.sh && \
 chmod +x /docker-entrypoint.sh
 
@@ -109,6 +140,10 @@ RUN mkdir -p vtcpd
 # Copy pre-built binaries from host
 COPY ./deps/vtcpd/vtcpd /vtcp/vtcpd/
 COPY ./deps/cli/cli /vtcp/cli
+COPY ./docker-entrypoint-initdb.sh /docker-entrypoint-initdb.sh
+COPY ./start-postgres.sh /usr/local/bin/start-postgres.sh
+RUN chmod +x /docker-entrypoint-initdb.sh
+RUN chmod +x /usr/local/bin/start-postgres.sh
 
 # Define build arguments and convert them to runtime environment variables
 ARG VTCPD_LISTEN_ADDRESS=127.0.0.1
@@ -118,6 +153,7 @@ ARG VTCPD_MAX_HOPS=5
 ARG CLI_LISTEN_ADDRESS=127.0.0.1
 ARG CLI_LISTEN_PORT=3000
 ARG CLI_LISTEN_PORT_TESTING=3001
+ARG VTCPD_DATABASE_CONFIG=sqlite3:///io
 
 ENV VTCPD_LISTEN_ADDRESS=${VTCPD_LISTEN_ADDRESS}
 ENV VTCPD_LISTEN_PORT=${VTCPD_LISTEN_PORT}
@@ -126,6 +162,7 @@ ENV VTCPD_MAX_HOPS=${VTCPD_MAX_HOPS}
 ENV CLI_LISTEN_ADDRESS=${CLI_LISTEN_ADDRESS}
 ENV CLI_LISTEN_PORT=${CLI_LISTEN_PORT}
 ENV CLI_LISTEN_PORT_TESTING=${CLI_LISTEN_PORT_TESTING}
+ENV VTCPD_DATABASE_CONFIG=${VTCPD_DATABASE_CONFIG}
 
 # Create startup script that uses runtime environment variables
 RUN echo '#!/bin/bash\n\
@@ -139,6 +176,7 @@ cat <<EOF > /vtcp/vtcpd/conf.json\n\
       "address": "${VTCPD_LISTEN_ADDRESS}:${VTCPD_LISTEN_PORT}"\n\
     }\n\
   ],\n\
+  "database_config": "${VTCPD_DATABASE_CONFIG}",\n\
   "equivalents_registry_address": "${VTCPD_EQUIVALENTS_REGISTRY}",\n\
   "max_hops_count": ${VTCPD_MAX_HOPS}\n\
 }\n\
@@ -154,6 +192,17 @@ http_testing:\n\
   host: "${CLI_LISTEN_ADDRESS}"\n\
   port: ${CLI_LISTEN_PORT_TESTING}\n\
 EOF\n\
+# Initialize PostgreSQL if configured\n\
+if [[ "${VTCPD_DATABASE_CONFIG}" == *"postgresql"* ]]; then\n\
+  /docker-entrypoint-initdb.sh\n\
+  PGDATA=/var/lib/postgresql/data\n\
+  # Start PostgreSQL server using the dedicated script\n\
+  if command -v runuser &>/dev/null; then\n\
+      runuser -u postgres -- /usr/local/bin/start-postgres.sh\n\
+  else\n\
+      su - postgres -c /usr/local/bin/start-postgres.sh\n\
+  fi\n\
+fi\n\
 exec "$@"' > /docker-entrypoint.sh && \
 chmod +x /docker-entrypoint.sh
 
