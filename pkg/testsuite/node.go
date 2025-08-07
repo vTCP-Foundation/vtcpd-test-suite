@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -327,6 +328,43 @@ func (n *Node) GetChannelInfoByAddress(targetNode *Node) (*ChannelInfo, error) {
 		return nil, fmt.Errorf("failed to decode channel-by-address response: %w", err)
 	}
 	return &result.Data, nil
+}
+
+// WaitForReady waits for the node to be ready to accept API requests
+func (n *Node) WaitForReady(t *testing.T, timeout time.Duration) error {
+	t.Logf("Waiting for node %s (%s) to be ready...", n.Alias, n.IPAddress)
+
+	healthCheckURL := fmt.Sprintf("http://%s:%d/api/v1/node/contractors/", n.IPAddress, n.CLIPort)
+
+	start := time.Now()
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			resp, err := http.Get(healthCheckURL)
+			if err == nil {
+				resp.Body.Close()
+				// Any response (even error codes) means the server is responding
+				elapsed := time.Since(start)
+				t.Logf("Node %s (%s) is ready after %v", n.Alias, n.IPAddress, elapsed)
+
+				// Additional wait for PostgreSQL database to be fully ready
+				// Check if we're using PostgreSQL by looking for connection string
+				if dbConfig := os.Getenv("VTCPD_DATABASE_CONFIG"); strings.Contains(dbConfig, "postgresql") {
+					t.Logf("PostgreSQL detected (pre-initialized), waiting additional 2 seconds for startup...")
+					time.Sleep(2 * time.Second)
+				}
+				return nil
+			}
+
+			if time.Since(start) > timeout {
+				return fmt.Errorf("node %s (%s) failed to become ready within %v. Last error: %v",
+					n.Alias, n.IPAddress, timeout, err)
+			}
+		}
+	}
 }
 
 func (n *Node) OpenChannelAndCheck(t *testing.T, targetNode *Node) {
@@ -873,7 +911,7 @@ func (n *Node) SetTestingSLFlag(flag uint64, firstParam, secondParam, thirdParam
 // - participantsVotesCount: Expected count of records in 'payment_participants_votes' table.
 // - incomingReceiptsCount: Expected count of records in 'incoming_receipt' table.
 // - outgoingReceiptsCount: Expected count of records in 'outgoing_receipt' table.
-func (n *Node) CheckPaymentTransaction(
+func (n *Node) CheckPaymentTransactionSQLite(
 	t *testing.T,
 	transactionState string,
 	paymentTransactionsCount int,
@@ -885,7 +923,7 @@ func (n *Node) CheckPaymentTransaction(
 		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
 	}
 
-	dbPath := "/vtcp/vtcpd/io/storageDB" // As specified by the user
+	dbPath := "/vtcp/vtcpd/io/storagedb" // As specified by the user
 
 	executeQuery := func(query string) (string, error) {
 		cmdArgs := []string{"exec", n.ContainerID, "sqlite3", dbPath, query}
@@ -954,7 +992,7 @@ func (n *Node) CheckPaymentTransaction(
 // - t: The testing.T instance for logging and failing tests.
 // - isTransactionShouldBePresent: A boolean indicating if a transaction record is expected (true means 1, false means 0).
 // - timeToSleepSeconds: The number of seconds to sleep before performing the check.
-func (n *Node) CheckSerializedTransaction(
+func (n *Node) CheckSerializedTransactionSQLite(
 	t *testing.T,
 	isTransactionShouldBePresent bool,
 	timeToSleepSeconds int,
@@ -967,7 +1005,7 @@ func (n *Node) CheckSerializedTransaction(
 		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
 	}
 
-	dbPath := "/vtcp/vtcpd/io/storageDB" // As specified by the user
+	dbPath := "/vtcp/vtcpd/io/storagedb" // As specified by the user
 
 	executeQuery := func(query string) (string, error) {
 		cmdArgs := []string{"exec", n.ContainerID, "sqlite3", dbPath, query}
@@ -1010,12 +1048,12 @@ func (n *Node) CheckSerializedTransaction(
 }
 
 // CheckValidKeys queries the node's SQLite database to check the count of valid own and contractor keys.
-func (n *Node) CheckValidKeys(t *testing.T, expectedOwnValidKeysCount, expectedContractorValidKeysCount int) {
+func (n *Node) CheckValidKeysSQLite(t *testing.T, expectedOwnValidKeysCount, expectedContractorValidKeysCount int) {
 	if n.ContainerID == "" {
 		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
 	}
 
-	dbPath := "/vtcp/vtcpd/io/storageDB"
+	dbPath := "/vtcp/vtcpd/io/storagedb"
 
 	executeQuery := func(query string) (string, error) {
 		cmdArgs := []string{"exec", n.ContainerID, "sqlite3", dbPath, query}
@@ -1059,7 +1097,7 @@ func (n *Node) CheckValidKeys(t *testing.T, expectedOwnValidKeysCount, expectedC
 
 // CheckSettlementLineState queries the node's SQLite database to check the state of a trust line.
 // equivalent is typically "1" or another string.
-func (n *Node) CheckSettlementLineState(t *testing.T, targetNode *Node, equivalent string, expectedState string) {
+func (n *Node) CheckSettlementLineStateSQLite(t *testing.T, targetNode *Node, equivalent string, expectedState string) {
 	if n.ContainerID == "" {
 		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
 	}
@@ -1073,7 +1111,7 @@ func (n *Node) CheckSettlementLineState(t *testing.T, targetNode *Node, equivale
 	}
 	contractorID := channelInfo.ChannelID // This is the contractor_id in the context of trust_lines table
 
-	dbPath := "/vtcp/vtcpd/io/storageDB"
+	dbPath := "/vtcp/vtcpd/io/storagedb"
 	query := fmt.Sprintf("SELECT state FROM trust_lines WHERE contractor_id = '%s' AND equivalent = %s", contractorID, equivalent)
 
 	executeQuery := func(q string) (string, error) {
@@ -1103,12 +1141,12 @@ func (n *Node) CheckSettlementLineState(t *testing.T, targetNode *Node, equivale
 
 // CheckPaymentRecordWithCommandUUID queries the node's SQLite database
 // to check for the presence of a payment record with a specific command_uuid.
-func (n *Node) CheckPaymentRecordWithCommandUUID(t *testing.T, commandUUID string, shouldBePresent bool) {
+func (n *Node) CheckPaymentRecordWithCommandUUIDSQLite(t *testing.T, commandUUID string, shouldBePresent bool) {
 	if n.ContainerID == "" {
 		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
 	}
 
-	dbPath := "/vtcp/vtcpd/io/storageDB"
+	dbPath := "/vtcp/vtcpd/io/storagedb"
 	// The command_uuid in the database is stored as a blob without dashes.
 	formattedCommandUUID := strings.ReplaceAll(commandUUID, "-", "")
 	query := fmt.Sprintf("SELECT COUNT(*) FROM history WHERE command_uuid = x'%s'", formattedCommandUUID)
@@ -1152,7 +1190,7 @@ func (n *Node) CheckPaymentRecordWithCommandUUID(t *testing.T, commandUUID strin
 
 // CheckCurrentAudit queries the node's SQLite database to check the current audit number for a trust line.
 // equivalent is typically "1" or another integer string.
-func (n *Node) CheckCurrentAudit(t *testing.T, targetNode *Node, equivalent string, expectedAuditNumber int) {
+func (n *Node) CheckCurrentAuditSQLite(t *testing.T, targetNode *Node, equivalent string, expectedAuditNumber int) {
 	if n.ContainerID == "" {
 		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
 	}
@@ -1163,7 +1201,7 @@ func (n *Node) CheckCurrentAudit(t *testing.T, targetNode *Node, equivalent stri
 	}
 	contractorID := channelInfo.ChannelID
 
-	dbPath := "/vtcp/vtcpd/io/storageDB"
+	dbPath := "/vtcp/vtcpd/io/storagedb"
 	// First, get the trust_line_id
 	queryTrustLineID := fmt.Sprintf("SELECT id FROM trust_lines WHERE contractor_id = '%s' AND equivalent = %s", contractorID, equivalent)
 
@@ -1619,4 +1657,401 @@ func (n *Node) HistoryPaymentsAllEquivalents(t *testing.T) map[string]interface{
 	}
 
 	return result
+}
+
+// CheckPaymentTransactionPostgreSQL queries the node's PostgreSQL database within its Docker container
+// to verify various aspects of payment transactions.
+func (n *Node) CheckPaymentTransactionPostgreSQL(
+	t *testing.T,
+	transactionState string,
+	paymentTransactionsCount int,
+	participantsVotesCount int,
+	incomingReceiptsCount int,
+	outgoingReceiptsCount int,
+) {
+	if n.ContainerID == "" {
+		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
+	}
+
+	executeQuery := func(query string) (string, error) {
+		psqlCmd := fmt.Sprintf("PGPASSWORD=vtcpd_pass psql -h 127.0.0.1 -U vtcpd_user -d storagedb -t -A -c \"%s\"", query)
+		cmdArgs := []string{"exec", n.ContainerID, "sh", "-c", psqlCmd}
+		cmd := exec.Command("docker", cmdArgs...)
+
+		output, err := cmd.CombinedOutput()
+		trimmedOutput := strings.TrimSpace(string(output))
+
+		if err != nil {
+			return trimmedOutput, fmt.Errorf("docker exec psql command failed for query ['%s'] on node %s (container: %s): %v. Output: %s", query, n.Alias, n.ContainerID, err, trimmedOutput)
+		}
+		return trimmedOutput, nil
+	}
+
+	// 1. Check transaction_state (if provided)
+	if transactionState != "" {
+		query := "SELECT observing_state FROM payment_transactions ORDER BY recording_time DESC LIMIT 1"
+		actualState, err := executeQuery(query)
+		if err != nil {
+			t.Fatalf("Node %s: Error querying transaction state. Query: '%s'. Error: %v", n.Alias, query, err)
+		}
+		if actualState != transactionState {
+			t.Fatalf("Node %s: Transaction state mismatch. Expected: '%s', Got: '%s'. Query: '%s'", n.Alias, transactionState, actualState, query)
+		}
+	}
+
+	// Helper for checking counts
+	checkCount := func(tableName string, expectedCount int) {
+		query := fmt.Sprintf("SELECT count(*) FROM %s", tableName)
+		countStr, err := executeQuery(query)
+		if err != nil {
+			t.Fatalf("Node %s: Error querying count for table '%s'. Query: '%s'. Error: %v. Output: %s", n.Alias, tableName, query, err, countStr)
+		}
+		actualCount, convErr := strconv.Atoi(countStr)
+		if convErr != nil {
+			t.Fatalf("Node %s: Error converting count '%s' to int for table '%s'. Query: '%s'. Error: %v", n.Alias, countStr, tableName, query, convErr)
+		}
+		if actualCount != expectedCount {
+			t.Fatalf("Node %s: Count mismatch for table '%s'. Expected: %d, Got: %d. Query: '%s'", n.Alias, tableName, expectedCount, actualCount, query)
+		}
+	}
+
+	// 2. Check payment_transactions count
+	checkCount("payment_transactions", paymentTransactionsCount)
+
+	// 3. Check payment_participants_votes count
+	checkCount("payment_participants_votes", participantsVotesCount)
+
+	// 4. Check incoming_receipt count
+	checkCount("incoming_receipt", incomingReceiptsCount)
+
+	// 5. Check outgoing_receipt count
+	checkCount("outgoing_receipt", outgoingReceiptsCount)
+}
+
+// CheckSerializedTransactionPostgreSQL queries the node's PostgreSQL database within its Docker container
+// to check for the presence and count of records in the 'transactions' table.
+func (n *Node) CheckSerializedTransactionPostgreSQL(
+	t *testing.T,
+	isTransactionShouldBePresent bool,
+	timeToSleepSeconds int,
+) {
+	if timeToSleepSeconds > 0 {
+		time.Sleep(time.Duration(timeToSleepSeconds) * time.Second)
+	}
+
+	if n.ContainerID == "" {
+		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
+	}
+
+	executeQuery := func(query string) (string, error) {
+		psqlCmd := fmt.Sprintf("PGPASSWORD=vtcpd_pass psql -h 127.0.0.1 -U vtcpd_user -d storagedb -t -A -c \"%s\"", query)
+		cmdArgs := []string{"exec", n.ContainerID, "sh", "-c", psqlCmd}
+		cmd := exec.Command("docker", cmdArgs...)
+
+		output, err := cmd.CombinedOutput()
+		trimmedOutput := strings.TrimSpace(string(output))
+
+		if err != nil {
+			return trimmedOutput, fmt.Errorf("docker exec psql command failed for query ['%s'] on node %s (container: %s): %v. Output: %s", query, n.Alias, n.ContainerID, err, trimmedOutput)
+		}
+		return trimmedOutput, nil
+	}
+
+	query := "SELECT count(*) FROM transactions"
+	countStr, err := executeQuery(query)
+	if err != nil {
+		t.Fatalf("Node %s: Error querying count from 'transactions' table. Query: '%s'. Error: %v. Output: %s", n.Alias, query, err, countStr)
+	}
+
+	actualCount, convErr := strconv.Atoi(countStr)
+	if convErr != nil {
+		t.Fatalf("Node %s: Error converting count '%s' to int for 'transactions' table. Query: '%s'. PostgreSQL output: '%s'. Conversion error: %v", n.Alias, countStr, query, countStr, convErr)
+	}
+
+	expectedCount := 0
+	if isTransactionShouldBePresent {
+		expectedCount = 1
+	}
+
+	if actualCount != expectedCount {
+		if isTransactionShouldBePresent {
+			t.Fatalf("Node %s: Expected 1 serialized transaction in DB, but found %d. Query: '%s'", n.Alias, actualCount, query)
+		} else {
+			t.Fatalf("Node %s: Expected 0 serialized transactions in DB, but found %d. Query: '%s'", n.Alias, actualCount, query)
+		}
+	}
+}
+
+// CheckValidKeysPostgreSQL queries the node's PostgreSQL database to check the count of valid own and contractor keys.
+func (n *Node) CheckValidKeysPostgreSQL(t *testing.T, expectedOwnValidKeysCount, expectedContractorValidKeysCount int) {
+	if n.ContainerID == "" {
+		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
+	}
+
+	executeQuery := func(query string) (string, error) {
+		psqlCmd := fmt.Sprintf("PGPASSWORD=vtcpd_pass psql -h 127.0.0.1 -U vtcpd_user -d storagedb -t -A -c \"%s\"", query)
+		cmdArgs := []string{"exec", n.ContainerID, "sh", "-c", psqlCmd}
+		cmd := exec.Command("docker", cmdArgs...)
+		output, err := cmd.CombinedOutput()
+		trimmedOutput := strings.TrimSpace(string(output))
+		if err != nil {
+			return trimmedOutput, fmt.Errorf("docker exec psql command failed for query ['%s'] on node %s (container: %s): %v. Output: %s", query, n.Alias, n.ContainerID, err, trimmedOutput)
+		}
+		return trimmedOutput, nil
+	}
+
+	// Check own_keys
+	queryOwnKeys := "SELECT COUNT(*) FROM own_keys WHERE is_valid = true"
+	ownKeysCountStr, err := executeQuery(queryOwnKeys)
+	if err != nil {
+		t.Fatalf("Node %s: Error querying own_keys count. Query: '%s'. Error: %v. Output: %s", n.Alias, queryOwnKeys, err, ownKeysCountStr)
+	}
+	ownKeysCount, convErr := strconv.Atoi(ownKeysCountStr)
+	if convErr != nil {
+		t.Fatalf("Node %s: Error converting own_keys count '%s' to int. Query: '%s'. Error: %v", n.Alias, ownKeysCountStr, queryOwnKeys, convErr)
+	}
+	if ownKeysCount != expectedOwnValidKeysCount {
+		t.Fatalf("Node %s: Own valid keys count mismatch. Expected: %d, Got: %d. Query: '%s'", n.Alias, expectedOwnValidKeysCount, ownKeysCount, queryOwnKeys)
+	}
+
+	// Check contractor_keys
+	queryContractorKeys := "SELECT COUNT(*) FROM contractor_keys WHERE is_valid = true"
+	contractorKeysCountStr, err := executeQuery(queryContractorKeys)
+	if err != nil {
+		t.Fatalf("Node %s: Error querying contractor_keys count. Query: '%s'. Error: %v. Output: %s", n.Alias, queryContractorKeys, err, contractorKeysCountStr)
+	}
+	contractorKeysCount, convErr := strconv.Atoi(contractorKeysCountStr)
+	if convErr != nil {
+		t.Fatalf("Node %s: Error converting contractor_keys count '%s' to int. Query: '%s'. Error: %v", n.Alias, contractorKeysCountStr, queryContractorKeys, convErr)
+	}
+	if contractorKeysCount != expectedContractorValidKeysCount {
+		t.Fatalf("Node %s: Contractor valid keys count mismatch. Expected: %d, Got: %d. Query: '%s'", n.Alias, expectedContractorValidKeysCount, contractorKeysCount, queryContractorKeys)
+	}
+}
+
+// CheckSettlementLineStatePostgreSQL queries the node's PostgreSQL database to check the state of a trust line.
+func (n *Node) CheckSettlementLineStatePostgreSQL(t *testing.T, targetNode *Node, equivalent string, expectedState string) {
+	if n.ContainerID == "" {
+		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
+	}
+
+	// First, get contractor_id (channel_id) for the target node
+	channelInfo, err := n.GetChannelInfoByAddress(targetNode)
+	if err != nil {
+		t.Fatalf("Node %s: Failed to get channel info for target %s to find contractor_id: %v", n.Alias, targetNode.Alias, err)
+	}
+	contractorID := channelInfo.ChannelID
+
+	query := fmt.Sprintf("SELECT state FROM trust_lines WHERE contractor_id = '%s' AND equivalent = %s", contractorID, equivalent)
+
+	executeQuery := func(q string) (string, error) {
+		psqlCmd := fmt.Sprintf("PGPASSWORD=vtcpd_pass psql -h 127.0.0.1 -U vtcpd_user -d storagedb -t -A -c \"%s\"", q)
+		cmdArgs := []string{"exec", n.ContainerID, "sh", "-c", psqlCmd}
+		cmd := exec.Command("docker", cmdArgs...)
+		output, errCmd := cmd.CombinedOutput()
+		trimmedOutput := strings.TrimSpace(string(output))
+		if errCmd != nil {
+			return trimmedOutput, fmt.Errorf("docker exec psql command failed for query ['%s'] on node %s: %v. Output: %s", q, n.Alias, errCmd, trimmedOutput)
+		}
+		return trimmedOutput, nil
+	}
+
+	actualState, err := executeQuery(query)
+	if err != nil {
+		t.Fatalf("Node %s: Error querying trust_line state. Query: '%s'. Error: %v", n.Alias, query, err)
+	}
+	if actualState == "" {
+		t.Fatalf("Node %s: No trust_line state returned for query: '%s'. The trust line might not exist for contractor_id '%s' and equivalent '%s'.", n.Alias, query, contractorID, equivalent)
+	}
+
+	if actualState != expectedState {
+		t.Fatalf("Node %s: TrustLine state mismatch for contractor %s (ID: %s), equivalent %s. Expected: %s, Got: %s. Query: '%s'",
+			n.Alias, targetNode.Alias, contractorID, equivalent, expectedState, actualState, query)
+	}
+}
+
+// CheckPaymentRecordWithCommandUUIDPostgreSQL queries the node's PostgreSQL database
+// to check for the presence of a payment record with a specific command_uuid.
+func (n *Node) CheckPaymentRecordWithCommandUUIDPostgreSQL(t *testing.T, commandUUID string, shouldBePresent bool) {
+	if n.ContainerID == "" {
+		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
+	}
+
+	// The command_uuid in PostgreSQL is stored as a binary UUID, adapted for PostgreSQL format
+	formattedCommandUUID := strings.ReplaceAll(commandUUID, "-", "")
+	query := fmt.Sprintf("SELECT COUNT(*) FROM history WHERE command_uuid = E'\\\\x%s'", formattedCommandUUID)
+
+	executeQuery := func(q string) (string, error) {
+		psqlCmd := fmt.Sprintf("PGPASSWORD=vtcpd_pass psql -h 127.0.0.1 -U vtcpd_user -d storagedb -t -A -c \"%s\"", q)
+		cmdArgs := []string{"exec", n.ContainerID, "sh", "-c", psqlCmd}
+		cmd := exec.Command("docker", cmdArgs...)
+		output, errCmd := cmd.CombinedOutput()
+		trimmedOutput := strings.TrimSpace(string(output))
+		if errCmd != nil {
+			return trimmedOutput, fmt.Errorf("docker exec psql command failed for query ['%s'] on node %s: %v. Output: %s", q, n.Alias, errCmd, trimmedOutput)
+		}
+		return trimmedOutput, nil
+	}
+
+	countStr, err := executeQuery(query)
+	if err != nil {
+		t.Fatalf("Node %s: Error querying history for command_uuid '%s'. Query: '%s'. Error: %v", n.Alias, commandUUID, query, err)
+	}
+
+	actualCount, convErr := strconv.Atoi(countStr)
+	if convErr != nil {
+		t.Fatalf("Node %s: Error converting count '%s' to int for history query. Command UUID: '%s'. Query: '%s'. Error: %v", n.Alias, countStr, commandUUID, query, convErr)
+	}
+
+	if shouldBePresent {
+		if actualCount == 0 {
+			t.Fatalf("Node %s: Expected payment record with command_uuid '%s' to be present, but found 0. Query: '%s'", n.Alias, commandUUID, query)
+		}
+		if actualCount > 1 {
+			t.Logf("Node %s: Warning - found %d records for command_uuid '%s'. Expected at least 1. Query: '%s'", n.Alias, actualCount, commandUUID, query)
+		}
+	} else {
+		if actualCount > 0 {
+			t.Fatalf("Node %s: Expected no payment record with command_uuid '%s', but found %d. Query: '%s'", n.Alias, commandUUID, actualCount, query)
+		}
+	}
+}
+
+// CheckCurrentAuditPostgreSQL queries the node's PostgreSQL database to check the current audit number for a trust line.
+func (n *Node) CheckCurrentAuditPostgreSQL(t *testing.T, targetNode *Node, equivalent string, expectedAuditNumber int) {
+	if n.ContainerID == "" {
+		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
+	}
+
+	channelInfo, err := n.GetChannelInfoByAddress(targetNode)
+	if err != nil {
+		t.Fatalf("Node %s: Failed to get channel info for target %s to find contractor_id for audit check: %v", n.Alias, targetNode.Alias, err)
+	}
+	contractorID := channelInfo.ChannelID
+
+	// First, get the trust_line_id
+	queryTrustLineID := fmt.Sprintf("SELECT id FROM trust_lines WHERE contractor_id = '%s' AND equivalent = %s", contractorID, equivalent)
+
+	executeQuery := func(q string) (string, error) {
+		psqlCmd := fmt.Sprintf("PGPASSWORD=vtcpd_pass psql -h 127.0.0.1 -U vtcpd_user -d storagedb -t -A -c \"%s\"", q)
+		cmdArgs := []string{"exec", n.ContainerID, "sh", "-c", psqlCmd}
+		cmd := exec.Command("docker", cmdArgs...)
+		output, errCmd := cmd.CombinedOutput()
+		trimmedOutput := strings.TrimSpace(string(output))
+		if errCmd != nil {
+			return trimmedOutput, fmt.Errorf("docker exec psql command failed for query ['%s'] on node %s: %v. Output: %s", q, n.Alias, errCmd, trimmedOutput)
+		}
+		return trimmedOutput, nil
+	}
+
+	trustLineIDStr, err := executeQuery(queryTrustLineID)
+	if err != nil {
+		t.Fatalf("Node %s: Error querying trust_line id. Query: '%s'. Error: %v", n.Alias, queryTrustLineID, err)
+	}
+	if trustLineIDStr == "" {
+		t.Fatalf("Node %s: No trust_line id returned for query: '%s'. The trust line might not exist for contractor_id '%s' and equivalent '%s'.", n.Alias, queryTrustLineID, contractorID, equivalent)
+	}
+
+	queryAudit := fmt.Sprintf("SELECT number FROM audit WHERE trust_line_id = %s ORDER BY number DESC LIMIT 1", trustLineIDStr)
+	actualAuditStr, err := executeQuery(queryAudit)
+	if err != nil {
+		t.Fatalf("Node %s: Error querying audit number. Query: '%s'. Error: %v", n.Alias, queryAudit, err)
+	}
+	if actualAuditStr == "" {
+		t.Fatalf("Node %s: No audit number returned for trust_line_id '%s'. Query: '%s'", n.Alias, trustLineIDStr, queryAudit)
+	}
+
+	actualAuditNumber, convErr := strconv.Atoi(actualAuditStr)
+	if convErr != nil {
+		t.Fatalf("Node %s: Error converting audit number '%s' to int. Query: '%s'. Error: %v", n.Alias, actualAuditStr, queryAudit, convErr)
+	}
+
+	if actualAuditNumber != expectedAuditNumber {
+		t.Fatalf("Node %s: Current audit number mismatch for contractor %s (TrustLineID: %s), equivalent %s. Expected: %d, Got: %d. Query: '%s'", n.Alias, targetNode.Alias, trustLineIDStr, equivalent, expectedAuditNumber, actualAuditNumber, queryAudit)
+	}
+}
+
+// Wrapper methods that dispatch to the appropriate database implementation based on VTCPD_DATABASE_CONFIG
+
+// CheckPaymentTransaction dispatches to the appropriate database implementation
+func (n *Node) CheckPaymentTransaction(
+	t *testing.T,
+	transactionState string,
+	paymentTransactionsCount int,
+	participantsVotesCount int,
+	incomingReceiptsCount int,
+	outgoingReceiptsCount int,
+) {
+	dbConfig := os.Getenv("VTCPD_DATABASE_CONFIG")
+	if strings.Contains(dbConfig, "sqlite") {
+		n.CheckPaymentTransactionSQLite(t, transactionState, paymentTransactionsCount, participantsVotesCount, incomingReceiptsCount, outgoingReceiptsCount)
+	} else if strings.Contains(dbConfig, "postgresql") {
+		n.CheckPaymentTransactionPostgreSQL(t, transactionState, paymentTransactionsCount, participantsVotesCount, incomingReceiptsCount, outgoingReceiptsCount)
+	} else {
+		n.CheckPaymentTransactionSQLite(t, transactionState, paymentTransactionsCount, participantsVotesCount, incomingReceiptsCount, outgoingReceiptsCount)
+	}
+}
+
+// CheckSerializedTransaction dispatches to the appropriate database implementation
+func (n *Node) CheckSerializedTransaction(
+	t *testing.T,
+	isTransactionShouldBePresent bool,
+	timeToSleepSeconds int,
+) {
+	dbConfig := os.Getenv("VTCPD_DATABASE_CONFIG")
+	if strings.Contains(dbConfig, "sqlite") {
+		n.CheckSerializedTransactionSQLite(t, isTransactionShouldBePresent, timeToSleepSeconds)
+	} else if strings.Contains(dbConfig, "postgresql") {
+		n.CheckSerializedTransactionPostgreSQL(t, isTransactionShouldBePresent, timeToSleepSeconds)
+	} else {
+		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+	}
+}
+
+// CheckValidKeys dispatches to the appropriate database implementation
+func (n *Node) CheckValidKeys(t *testing.T, expectedOwnValidKeysCount, expectedContractorValidKeysCount int) {
+	dbConfig := os.Getenv("VTCPD_DATABASE_CONFIG")
+	if strings.Contains(dbConfig, "sqlite") {
+		n.CheckValidKeysSQLite(t, expectedOwnValidKeysCount, expectedContractorValidKeysCount)
+	} else if strings.Contains(dbConfig, "postgresql") {
+		n.CheckValidKeysPostgreSQL(t, expectedOwnValidKeysCount, expectedContractorValidKeysCount)
+	} else {
+		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+	}
+}
+
+// CheckSettlementLineState dispatches to the appropriate database implementation
+func (n *Node) CheckSettlementLineState(t *testing.T, targetNode *Node, equivalent string, expectedState string) {
+	dbConfig := os.Getenv("VTCPD_DATABASE_CONFIG")
+	if strings.Contains(dbConfig, "sqlite") {
+		n.CheckSettlementLineStateSQLite(t, targetNode, equivalent, expectedState)
+	} else if strings.Contains(dbConfig, "postgresql") {
+		n.CheckSettlementLineStatePostgreSQL(t, targetNode, equivalent, expectedState)
+	} else {
+		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+	}
+}
+
+// CheckPaymentRecordWithCommandUUID dispatches to the appropriate database implementation
+func (n *Node) CheckPaymentRecordWithCommandUUID(t *testing.T, commandUUID string, shouldBePresent bool) {
+	dbConfig := os.Getenv("VTCPD_DATABASE_CONFIG")
+	if strings.Contains(dbConfig, "sqlite") {
+		n.CheckPaymentRecordWithCommandUUIDSQLite(t, commandUUID, shouldBePresent)
+	} else if strings.Contains(dbConfig, "postgresql") {
+		n.CheckPaymentRecordWithCommandUUIDPostgreSQL(t, commandUUID, shouldBePresent)
+	} else {
+		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+	}
+}
+
+// CheckCurrentAudit dispatches to the appropriate database implementation
+func (n *Node) CheckCurrentAudit(t *testing.T, targetNode *Node, equivalent string, expectedAuditNumber int) {
+	dbConfig := os.Getenv("VTCPD_DATABASE_CONFIG")
+	if strings.Contains(dbConfig, "sqlite") {
+		n.CheckCurrentAuditSQLite(t, targetNode, equivalent, expectedAuditNumber)
+	} else if strings.Contains(dbConfig, "postgresql") {
+		n.CheckCurrentAuditPostgreSQL(t, targetNode, equivalent, expectedAuditNumber)
+	} else {
+		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+	}
 }

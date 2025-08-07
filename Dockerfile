@@ -47,8 +47,69 @@ RUN apt-get update && \
 
 
 ###################################################################################
+# PostgreSQL pre-initialization stage for Ubuntu
+FROM runtime-ubuntu AS postgres-init-ubuntu
+
+# Create PostgreSQL data directory
+RUN mkdir -p /var/lib/postgresql/data && \
+    chown -R postgres:postgres /var/lib/postgresql && \
+    chmod 700 /var/lib/postgresql/data
+
+# Create run directory for PostgreSQL socket
+RUN mkdir -p /var/run/postgresql && \
+    chown -R postgres:postgres /var/run/postgresql && \
+    chmod 775 /var/run/postgresql
+
+# Initialize PostgreSQL database cluster as postgres user
+RUN su - postgres -c "initdb -D /var/lib/postgresql/data -U postgres"
+
+# Start PostgreSQL temporarily, create user and database, then stop
+RUN su - postgres -c "pg_ctl -D /var/lib/postgresql/data -o '-c listen_addresses=127.0.0.1' -w start" && \
+    su - postgres -c "psql -v ON_ERROR_STOP=1 -c \"DO \\\$\\\$ BEGIN IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'vtcpd_user') THEN CREATE ROLE vtcpd_user LOGIN PASSWORD 'vtcpd_pass'; END IF; END \\\$\\\$;\"" && \
+    su - postgres -c "psql -v ON_ERROR_STOP=1 -c 'CREATE DATABASE storagedb OWNER vtcpd_user;'" && \
+    su - postgres -c "pg_ctl -D /var/lib/postgresql/data -m fast stop"
+
+# Create flag file to indicate database is initialized
+RUN touch /var/lib/postgresql/data/.initialized && \
+    chown postgres:postgres /var/lib/postgresql/data/.initialized
+
+
+###################################################################################
+# PostgreSQL pre-initialization stage for Manjaro
+FROM runtime-manjaro AS postgres-init-manjaro
+
+# Create PostgreSQL data directory
+RUN mkdir -p /var/lib/postgresql/data && \
+    chown -R postgres:postgres /var/lib/postgresql && \
+    chmod 700 /var/lib/postgresql/data
+
+# Create run directory for PostgreSQL socket
+RUN mkdir -p /var/run/postgresql && \
+    chown -R postgres:postgres /var/run/postgresql && \
+    chmod 775 /var/run/postgresql
+
+# Initialize PostgreSQL database cluster as postgres user
+RUN su - postgres -c "initdb -D /var/lib/postgresql/data -U postgres"
+
+# Start PostgreSQL temporarily, create user and database, then stop
+RUN su - postgres -c "pg_ctl -D /var/lib/postgresql/data -o '-c listen_addresses=127.0.0.1' -w start" && \
+    su - postgres -c "psql -v ON_ERROR_STOP=1 -c \"DO \\\$\\\$ BEGIN IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'vtcpd_user') THEN CREATE ROLE vtcpd_user LOGIN PASSWORD 'vtcpd_pass'; END IF; END \\\$\\\$;\"" && \
+    su - postgres -c "psql -v ON_ERROR_STOP=1 -c 'CREATE DATABASE storagedb OWNER vtcpd_user;'" && \
+    su - postgres -c "pg_ctl -D /var/lib/postgresql/data -m fast stop"
+
+# Create flag file to indicate database is initialized
+RUN touch /var/lib/postgresql/data/.initialized && \
+    chown postgres:postgres /var/lib/postgresql/data/.initialized
+
+
+###################################################################################
 # Final stage for Manjaro Linux
 FROM runtime-manjaro AS final-manjaro
+
+# Copy pre-initialized PostgreSQL data from init stage
+COPY --from=postgres-init-manjaro --chown=postgres:postgres /var/lib/postgresql/data /var/lib/postgresql/data
+# Fix permissions for PostgreSQL data directory
+RUN chmod 700 /var/lib/postgresql/data
 
 # Create vtcpd directory and set permissions
 RUN mkdir -p /vtcpd
@@ -58,10 +119,13 @@ RUN mkdir -p vtcpd
 # Copy pre-built binaries from host
 COPY ./deps/vtcpd /vtcpd/
 COPY ./deps/cli/cli /vtcpd/cli
-COPY ./docker-entrypoint-initdb.sh /docker-entrypoint-initdb.sh
 COPY ./start-postgres.sh /usr/local/bin/start-postgres.sh
-RUN chmod +x /docker-entrypoint-initdb.sh
 RUN chmod +x /usr/local/bin/start-postgres.sh
+
+# Create run directory for PostgreSQL socket
+RUN mkdir -p /var/run/postgresql && \
+    chown -R postgres:postgres /var/run/postgresql && \
+    chmod 775 /var/run/postgresql
 
 # Define build arguments and convert them to runtime environment variables
 ARG VTCPD_LISTEN_ADDRESS=127.0.0.1
@@ -110,10 +174,9 @@ http_testing:\n\
   host: "${CLI_LISTEN_ADDRESS}"\n\
   port: ${CLI_LISTEN_PORT_TESTING}\n\
 EOF\n\
-# Initialize PostgreSQL if configured\n\
+# Start PostgreSQL if configured (database already initialized)\n\
 if [[ "${VTCPD_DATABASE_CONFIG}" == *"postgresql"* ]]; then\n\
-  /docker-entrypoint-initdb.sh\n\
-  PGDATA=/var/lib/postgresql/data\n\
+  echo "[startup] Starting pre-initialized PostgreSQL..."\n\
   # Start PostgreSQL server using the dedicated script\n\
   if command -v runuser &>/dev/null; then\n\
       runuser -u postgres -- /usr/local/bin/start-postgres.sh\n\
@@ -132,6 +195,11 @@ CMD ["/vtcpd/vtcpd"]
 # Final stage for Ubuntu
 FROM runtime-ubuntu AS final-ubuntu
 
+# Copy pre-initialized PostgreSQL data from init stage
+COPY --from=postgres-init-ubuntu --chown=postgres:postgres /var/lib/postgresql/data /var/lib/postgresql/data
+# Fix permissions for PostgreSQL data directory
+RUN chmod 700 /var/lib/postgresql/data
+
 # Create vtcpd directory and set permissions
 RUN mkdir -p /vtcp
 WORKDIR /vtcp
@@ -140,10 +208,13 @@ RUN mkdir -p vtcpd
 # Copy pre-built binaries from host
 COPY ./deps/vtcpd/vtcpd /vtcp/vtcpd/
 COPY ./deps/cli/cli /vtcp/cli
-COPY ./docker-entrypoint-initdb.sh /docker-entrypoint-initdb.sh
 COPY ./start-postgres.sh /usr/local/bin/start-postgres.sh
-RUN chmod +x /docker-entrypoint-initdb.sh
 RUN chmod +x /usr/local/bin/start-postgres.sh
+
+# Create run directory for PostgreSQL socket
+RUN mkdir -p /var/run/postgresql && \
+    chown -R postgres:postgres /var/run/postgresql && \
+    chmod 775 /var/run/postgresql
 
 # Define build arguments and convert them to runtime environment variables
 ARG VTCPD_LISTEN_ADDRESS=127.0.0.1
@@ -192,10 +263,9 @@ http_testing:\n\
   host: "${CLI_LISTEN_ADDRESS}"\n\
   port: ${CLI_LISTEN_PORT_TESTING}\n\
 EOF\n\
-# Initialize PostgreSQL if configured\n\
+# Start PostgreSQL if configured (database already initialized)\n\
 if [[ "${VTCPD_DATABASE_CONFIG}" == *"postgresql"* ]]; then\n\
-  /docker-entrypoint-initdb.sh\n\
-  PGDATA=/var/lib/postgresql/data\n\
+  echo "[startup] Starting pre-initialized PostgreSQL..."\n\
   # Start PostgreSQL server using the dedicated script\n\
   if command -v runuser &>/dev/null; then\n\
       runuser -u postgres -- /usr/local/bin/start-postgres.sh\n\

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -57,6 +58,12 @@ func NewCluster(ctx context.Context, t *testing.T, settings *ClusterSettings) (*
 }
 
 func (c *Cluster) RunNode(ctx context.Context, t *testing.T, wg *sync.WaitGroup, node *Node) (err error) {
+	// Get VTCPD_DATABASE_CONFIG from environment and add it to node.Env if it exists
+	envVars := node.Env
+	if dbConfig := os.Getenv("VTCPD_DATABASE_CONFIG"); dbConfig != "" {
+		envVars = append(envVars, fmt.Sprintf("VTCPD_DATABASE_CONFIG=%s", dbConfig))
+	}
+
 	// Create container
 	resp, err := c.cli.ContainerCreate(c.ctx,
 		&container.Config{
@@ -66,7 +73,7 @@ func (c *Cluster) RunNode(ctx context.Context, t *testing.T, wg *sync.WaitGroup,
 				nat.Port(strconv.Itoa(int(node.CLIPort))):     struct{}{},
 				nat.Port(strconv.Itoa(int(node.CLIPortTest))): struct{}{},
 			},
-			Env: node.Env,
+			Env: envVars,
 		},
 		&container.HostConfig{
 			NetworkMode: container.NetworkMode(c.networkID),
@@ -140,7 +147,15 @@ func (c *Cluster) RunNodes(ctx context.Context, t *testing.T, nodes []*Node) {
 		println(fmt.Sprintf("Node %s is running : [%s : %s]", node.Alias, node.IPAddress, node.ContainerID))
 	}
 
-	time.Sleep(5 * time.Second)
+	// Wait for all nodes to be ready with health checks
+	// Use longer timeout for PostgreSQL which takes more time to initialize
+	timeout := 60 * time.Second
+
+	for _, node := range nodes {
+		if err := node.WaitForReady(t, timeout); err != nil {
+			t.Fatalf("Node %s failed to become ready: %v", node.Alias, err)
+		}
+	}
 }
 
 func (c *Cluster) RunSingleNode(ctx context.Context, t *testing.T, node *Node) {
@@ -152,7 +167,12 @@ func (c *Cluster) RunSingleNode(ctx context.Context, t *testing.T, node *Node) {
 	}
 
 	t.Logf("Node %s is running : [%s : %s]", node.Alias, node.IPAddress, node.ContainerID)
-	time.Sleep(2 * time.Second) // Give some time for the node to fully initialize
+
+	// Wait for node to be ready with health check
+	timeout := 60 * time.Second
+	if err := node.WaitForReady(t, timeout); err != nil {
+		t.Fatalf("Node %s failed to become ready: %v", node.Alias, err)
+	}
 }
 
 func (c *Cluster) StopSingleNode(ctx context.Context, t *testing.T, node *Node) {
