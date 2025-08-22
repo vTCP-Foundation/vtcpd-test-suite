@@ -52,8 +52,8 @@ func TestSettlementLineKeysSharingInitNormalPass(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_lost_key_init_message
@@ -77,8 +77,8 @@ func TestSettlementLineKeysSharingInitLostKeyInitMessage(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_lost_key_init_message_not_critical_times
@@ -104,8 +104,8 @@ func TestSettlementLineKeysSharingInitLostKeyInitMessageNotCriticalTimes(t *test
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_lost_key_init_message_critical_times
@@ -132,8 +132,8 @@ func TestSettlementLineKeysSharingInitLostKeyInitMessageCriticalTimes(t *testing
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive) // Python implies TL is active
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive) // Python implies TL is active
 
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, 0) // Own, Contractor
-	nodeB.CheckValidKeys(t, 0, 0)                     // Own, Contractor
+	nodeA.CheckValidKeys(t) // Own, Contractor
+	nodeB.CheckValidKeys(t)                     // Own, Contractor
 	// TODO: Check TL state for "keys pending" if Go test suite has such a state. Python comments "TL state throw handler should be keys pending"
 }
 
@@ -158,8 +158,8 @@ func TestSettlementLineKeysSharingInitLostKeyMessage(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_lost_key_message_not_critical_times
@@ -184,8 +184,8 @@ func TestSettlementLineKeysSharingInitLostKeyMessageNotCriticalTimes(t *testing.
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_lost_key_message_critical_times
@@ -208,8 +208,8 @@ func TestSettlementLineKeysSharingInitLostKeyMessageCriticalTimes(t *testing.T) 
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount, 1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 	// TODO: Check TL state for "keys pending"
 }
 
@@ -233,8 +233,8 @@ func TestSettlementLineKeysSharingInitLostKeyInitConfirmationMessage(t *testing.
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_lost_key_init_confirmation_message_not_critical_times
@@ -258,8 +258,8 @@ func TestSettlementLineKeysSharingInitLostKeyInitConfirmationMessageNotCriticalT
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_lost_key_init_confirmation_message_critical_times
@@ -284,8 +284,8 @@ func TestSettlementLineKeysSharingInitLostKeyInitConfirmationMessageCriticalTime
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	// Python: self.node_A.check_valid_keys(self.keys_count, self.keys_count) -> (10,10)
 	// Python: self.node_B.check_valid_keys(self.keys_count, 1) -> (10,1)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount, 1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 	// TODO: Check TL state for "keys pending"
 }
 
@@ -310,8 +310,8 @@ func TestSettlementLineKeysSharingInitLostKeyConfirmationMessage(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_lost_key_confirmation_message_not_critical_times
@@ -335,8 +335,8 @@ func TestSettlementLineKeysSharingInitLostKeyConfirmationMessageNotCriticalTimes
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_lost_key_confirmation_message_critical_times
@@ -359,8 +359,8 @@ func TestSettlementLineKeysSharingInitLostKeyConfirmationMessageCriticalTimes(t 
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount, 3)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 	// TODO: Check TL state for "keys pending"
 }
 
@@ -430,8 +430,8 @@ func TestSettlementLineKeysSharingInitExceptionOnInitNextKeyStage(t *testing.T) 
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_io_exception_on_initiator_next_key_stage
@@ -453,8 +453,8 @@ func TestSettlementLineKeysSharingInitIOExceptionOnInitNextKeyStage(t *testing.T
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_exception_on_contractor_first_key_stage
@@ -484,8 +484,8 @@ func TestSettlementLineKeysSharingInitExceptionOnContractorFirstKeyStage(t *test
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_io_exception_on_contractor_first_key_stage
@@ -507,8 +507,8 @@ func TestSettlementLineKeysSharingInitIOExceptionOnContractorFirstKeyStage(t *te
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_exception_on_contractor_next_key_stage
@@ -532,8 +532,8 @@ func TestSettlementLineKeysSharingInitExceptionOnContractorNextKeyStage(t *testi
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_io_exception_on_contractor_next_key_stage
@@ -555,8 +555,8 @@ func TestSettlementLineKeysSharingInitIOExceptionOnContractorNextKeyStage(t *tes
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Terminations
@@ -628,8 +628,8 @@ func TestSettlementLineKeysSharingInitTerminateOnInitNextKeyStage(t *testing.T) 
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_terminate_after_initiator_next_key_stage
@@ -652,8 +652,8 @@ func TestSettlementLineKeysSharingInitTerminateAfterInitNextKeyStage(t *testing.
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_terminate_on_contractor_first_key_stage
@@ -677,8 +677,8 @@ func TestSettlementLineKeysSharingInitTerminateOnContractorFirstKeyStage(t *test
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_terminate_after_contractor_first_key_stage
@@ -704,8 +704,8 @@ func TestSettlementLineKeysSharingInitTerminateAfterContractorFirstKeyStage(t *t
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_terminate_on_contractor_next_key_stage
@@ -729,8 +729,8 @@ func TestSettlementLineKeysSharingInitTerminateOnContractorNextKeyStage(t *testi
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_keys_sharing_init_terminate_after_contractor_next_key_stage
@@ -753,6 +753,6 @@ func TestSettlementLineKeysSharingInitTerminateAfterContractorNextKeyStage(t *te
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }

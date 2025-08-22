@@ -60,8 +60,8 @@ func TestSettlementLineKeysSharingByPaymentOnContractor(t *testing.T) {
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-4)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-4, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByPaymentOnIntermediateNode(t *testing.T) {
@@ -88,9 +88,9 @@ func TestSettlementLineKeysSharingByPaymentOnIntermediateNode(t *testing.T) {
 	nodeC.CheckSettlementLineKeysPresence(t, nodeA, true, true)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeC, true, true)
 
-	nodeA.CheckValidKeys(t, (vtcp.DefaultKeysCount-1)+(vtcp.DefaultKeysCount-2), (vtcp.DefaultKeysCount-4)+(vtcp.DefaultKeysCount-3))
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-4, vtcp.DefaultKeysCount-1)
-	nodeC.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-2)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
+	nodeC.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByModifyingAsInitiator(t *testing.T) {
@@ -106,8 +106,8 @@ func TestSettlementLineKeysSharingByModifyingAsInitiator(t *testing.T) {
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-5)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-5, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByModifyingAsContractor(t *testing.T) {
@@ -123,8 +123,8 @@ func TestSettlementLineKeysSharingByModifyingAsContractor(t *testing.T) {
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-5)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-5, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByClosingIncomingAsInitiator(t *testing.T) {
@@ -140,8 +140,8 @@ func TestSettlementLineKeysSharingByClosingIncomingAsInitiator(t *testing.T) {
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-5)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-5, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByClosingIncomingAsContractor(t *testing.T) {
@@ -157,8 +157,8 @@ func TestSettlementLineKeysSharingByClosingIncomingAsContractor(t *testing.T) {
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-5)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-5, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByModificationLostInitKeyMessage(t *testing.T) {
@@ -180,8 +180,8 @@ func TestSettlementLineKeysSharingByModificationLostInitKeyMessage(t *testing.T)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-5)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-5, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByClosingLostInitKeyMessage(t *testing.T) {
@@ -203,8 +203,8 @@ func TestSettlementLineKeysSharingByClosingLostInitKeyMessage(t *testing.T) {
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-5)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-5, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByPaymentLostInitKeyMessage(t *testing.T) {
@@ -226,8 +226,8 @@ func TestSettlementLineKeysSharingByPaymentLostInitKeyMessage(t *testing.T) {
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-4)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-4, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByModificationLostInitKeyMessageWithTASleeping(t *testing.T) {
@@ -249,8 +249,8 @@ func TestSettlementLineKeysSharingByModificationLostInitKeyMessageWithTASleeping
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, false, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-4)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-4, vtcp.DefaultCriticalKeysCount)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByClosingLostInitKeyMessageWithTASleeping(t *testing.T) {
@@ -272,8 +272,8 @@ func TestSettlementLineKeysSharingByClosingLostInitKeyMessageWithTASleeping(t *t
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, false, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-4)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-4, vtcp.DefaultCriticalKeysCount)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByPaymentLostInitKeyMessageWithTASleeping(t *testing.T) {
@@ -295,8 +295,8 @@ func TestSettlementLineKeysSharingByPaymentLostInitKeyMessageWithTASleeping(t *t
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, false, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultCriticalKeysCount)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByModificationLostKeyMessage(t *testing.T) {
@@ -318,8 +318,8 @@ func TestSettlementLineKeysSharingByModificationLostKeyMessage(t *testing.T) {
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-5)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-5, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByClosingLostKeyMessage(t *testing.T) {
@@ -341,8 +341,8 @@ func TestSettlementLineKeysSharingByClosingLostKeyMessage(t *testing.T) {
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-5)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-5, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByPaymentLostKeyMessage(t *testing.T) {
@@ -364,8 +364,8 @@ func TestSettlementLineKeysSharingByPaymentLostKeyMessage(t *testing.T) {
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-4)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-4, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByModificationLostKeyMessageWithTASleeping(t *testing.T) {
@@ -387,8 +387,8 @@ func TestSettlementLineKeysSharingByModificationLostKeyMessageWithTASleeping(t *
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, false, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, false)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-4)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-4, 1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByClosingLostKeyMessageWithTASleeping(t *testing.T) {
@@ -410,8 +410,8 @@ func TestSettlementLineKeysSharingByClosingLostKeyMessageWithTASleeping(t *testi
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, false, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-4)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-4, vtcp.DefaultCriticalKeysCount)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByModificationLostHashConfirmationMessage(t *testing.T) {
@@ -433,8 +433,8 @@ func TestSettlementLineKeysSharingByModificationLostHashConfirmationMessage(t *t
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-5)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-5, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByClosingLostHashConfirmationMessage(t *testing.T) {
@@ -456,8 +456,8 @@ func TestSettlementLineKeysSharingByClosingLostHashConfirmationMessage(t *testin
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-5)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-5, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByPaymentLostHashConfirmationMessage(t *testing.T) {
@@ -479,8 +479,8 @@ func TestSettlementLineKeysSharingByPaymentLostHashConfirmationMessage(t *testin
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, true, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-4)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-4, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByClosingLostHashConfirmationMessageWithTASleeping(t *testing.T) {
@@ -502,8 +502,8 @@ func TestSettlementLineKeysSharingByClosingLostHashConfirmationMessageWithTASlee
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, false, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-4)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-4, vtcp.DefaultCriticalKeysCount)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByPaymentLostHashConfirmationMessageWithTASleeping(t *testing.T) {
@@ -525,8 +525,8 @@ func TestSettlementLineKeysSharingByPaymentLostHashConfirmationMessageWithTASlee
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeA.CheckSettlementLineKeysPresence(t, nodeB, false, true)
 	nodeB.CheckSettlementLineKeysPresence(t, nodeA, true, true)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultCriticalKeysCount)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByModificationIOExceptionOnInitiatorSendFirstKey(t *testing.T) {
@@ -727,8 +727,8 @@ func TestSettlementLineKeysSharingByModificationTerminateOnInitiatorSendNextKey(
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByModificationTerminateAfterInitiatorSendNextKey(t *testing.T) {
@@ -749,8 +749,8 @@ func TestSettlementLineKeysSharingByModificationTerminateAfterInitiatorSendNextK
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByClosingTerminateOnInitiatorSendNextKey(t *testing.T) {
@@ -771,8 +771,8 @@ func TestSettlementLineKeysSharingByClosingTerminateOnInitiatorSendNextKey(t *te
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByClosingTerminateAfterInitiatorSendNextKey(t *testing.T) {
@@ -793,8 +793,8 @@ func TestSettlementLineKeysSharingByClosingTerminateAfterInitiatorSendNextKey(t 
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-3)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 func TestSettlementLineKeysSharingByPaymentTerminateOnInitiatorSendNextKey(t *testing.T) {
@@ -815,6 +815,6 @@ func TestSettlementLineKeysSharingByPaymentTerminateOnInitiatorSendNextKey(t *te
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount, vtcp.DefaultKeysCount-2)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-2, vtcp.DefaultKeysCount)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }

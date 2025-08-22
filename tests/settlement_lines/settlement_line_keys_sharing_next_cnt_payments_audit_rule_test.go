@@ -95,6 +95,6 @@ func TestSettlementLinesKeysSharingByPaymentOnCoordinator(t *testing.T) {
 
 	// TODO : not finished
 	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "50", vtcp.StatusOK)
-	// nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-4)
-	// nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-4, vtcp.DefaultKeysCount-1)
+	// nodeA.CheckValidKeys(t)
+	// nodeB.CheckValidKeys(t)
 }

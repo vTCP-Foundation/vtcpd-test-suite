@@ -52,8 +52,8 @@ func TestSettlementLineOpenNormalPass(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 }
 
 // Corresponds to test_trustlines_open_lost_TL_message
@@ -80,8 +80,8 @@ func TestSettlementLineOpenLostSettlementLineMessage(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_lost_TL_message_with_TA_resuming
@@ -108,8 +108,8 @@ func TestSettlementLineOpenLostMessageWithResuming(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_lost_TL_message_with_TA_resuming_and_lost_message_again
@@ -138,8 +138,8 @@ func TestSettlementLineOpenLostMessageWithResumingAndLostAgain(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_lost_TL_message_with_TA_resuming_second_time
@@ -168,8 +168,8 @@ func TestSettlementLineOpenLostMessageWithResumingSecondTime(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_lost_TL_confirmation_message
@@ -195,8 +195,8 @@ func TestSettlementLineOpenLostConfirmationMessage(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_lost_TL_confirmation_message_with_TA_resuming
@@ -222,8 +222,8 @@ func TestSettlementLineOpenLostConfirmationMessageWithResuming(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_lost_TL_confirmation_message_with_TA_resuming_and_lost_message_again
@@ -252,8 +252,8 @@ func TestSettlementLineOpenLostConfirmationMessageWithResumingAndLostAgain(t *te
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_lost_TL_confirmation_message_with_TA_resuming_second_time
@@ -282,8 +282,8 @@ func TestSettlementLineOpenLostConfirmationMessageWithResumingSecondTime(t *test
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_exception_on_initiator_modifying_stage
@@ -310,8 +310,8 @@ func TestSettlementLineOpenExceptionOnInitModifyingStage(t *testing.T) {
 	nodeB.CheckSettlementLine(t, nodeA, testconfig.Equivalent,
 		"", "", "", "", "", "", vtcp.StatusProtocolError)
 
-	nodeA.CheckValidKeys(t, 0, 0)
-	nodeB.CheckValidKeys(t, 0, 0)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_io_exception_on_initiator_modifying_stage
@@ -341,8 +341,8 @@ func TestSettlementLineOpenIOExceptionOnInitModifyingStage(t *testing.T) {
 	nodeB.CheckSettlementLine(t, nodeA, testconfig.Equivalent,
 		"", "", "", "", "", "", vtcp.StatusProtocolError)
 
-	nodeA.CheckValidKeys(t, 0, 0)
-	nodeB.CheckValidKeys(t, 0, 0)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_exception_on_initiator_response_processing_stage
@@ -369,8 +369,8 @@ func TestSettlementLineOpenExceptionOnInitResponseProcessingStage(t *testing.T) 
 	// So, expected status is OK (200)
 	nodeA.CheckActiveSettlementLine(t, nodeB, testconfig.Equivalent, "0", "0", "0") // MaxPos, MaxNeg, Balance are 0 initially
 	nodeB.CheckActiveSettlementLine(t, nodeA, testconfig.Equivalent, "0", "0", "0")
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_io_exception_on_initiator_response_processing_stage
@@ -395,8 +395,8 @@ func TestSettlementLineOpenIOExceptionOnInitResponseProcessingStage(t *testing.T
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckActiveSettlementLine(t, nodeB, testconfig.Equivalent, "0", "0", "0")
 	nodeB.CheckActiveSettlementLine(t, nodeA, testconfig.Equivalent, "0", "0", "0")
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_exception_on_initiator_resuming_stage
@@ -432,8 +432,8 @@ func TestSettlementLineOpenExceptionOnInitResumingStage(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckActiveSettlementLine(t, nodeB, testconfig.Equivalent, "0", "0", "0")
 	nodeB.CheckActiveSettlementLine(t, nodeA, testconfig.Equivalent, "0", "0", "0")
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_io_exception_on_initiator_resuming_stage
@@ -466,8 +466,8 @@ func TestSettlementLineOpenIOExceptionOnInitResumingStage(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckActiveSettlementLine(t, nodeB, testconfig.Equivalent, "0", "0", "0")
 	nodeB.CheckActiveSettlementLine(t, nodeA, testconfig.Equivalent, "0", "0", "0")
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_exception_on_contractor_stage
@@ -495,8 +495,8 @@ func TestSettlementLineOpenExceptionOnContractorStage(t *testing.T) {
 	// This implies active settlement line with 0 balances and amounts.
 	nodeA.CheckActiveSettlementLine(t, nodeB, testconfig.Equivalent, "0", "0", "0")
 	nodeB.CheckActiveSettlementLine(t, nodeA, testconfig.Equivalent, "0", "0", "0")
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_io_exception_on_contractor_stage
@@ -521,8 +521,8 @@ func TestSettlementLineOpenIOExceptionOnContractorStage(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckActiveSettlementLine(t, nodeB, testconfig.Equivalent, "0", "0", "0")
 	nodeB.CheckActiveSettlementLine(t, nodeA, testconfig.Equivalent, "0", "0", "0")
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_terminate_on_initiator_modifying_stage
@@ -554,8 +554,8 @@ func TestSettlementLineOpenTerminateOnInitModifyingStage(t *testing.T) {
 		"", "", "", "", "", "", vtcp.StatusProtocolError)
 	// Valid keys check might depend on how far the process got before termination.
 	// Python test doesn't explicitly check keys here, so we might need to be flexible or assume 0.
-	nodeA.CheckValidKeys(t, 0, 0) // Assuming keys are not established
-	nodeB.CheckValidKeys(t, 0, 0)
+	nodeA.CheckValidKeys(t) // Assuming keys are not established
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_terminate_after_initiator_modifying_stage
@@ -583,8 +583,8 @@ func TestSettlementLineOpenTerminateAfterInitModifyingStage(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLine(t, nodeB, testconfig.Equivalent, "", "", "", "", "", "", vtcp.StatusProtocolError)
 	nodeB.CheckSettlementLine(t, nodeA, testconfig.Equivalent, "", "", "", "", "", "", vtcp.StatusProtocolError)
-	nodeA.CheckValidKeys(t, 0, 0)
-	nodeB.CheckValidKeys(t, 0, 0)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_terminate_on_initiator_response_processing_stage
@@ -612,8 +612,8 @@ func TestSettlementLineOpenTerminateOnInitResponseProcessingStage(t *testing.T) 
 	// For now, assuming the Python test implies successful formation despite the "terminate" flag name.
 	nodeA.CheckActiveSettlementLine(t, nodeB, testconfig.Equivalent, "0", "0", "0")
 	nodeB.CheckActiveSettlementLine(t, nodeA, testconfig.Equivalent, "0", "0", "0")
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_terminate_after_initiator_response_processing_stage
@@ -639,8 +639,8 @@ func TestSettlementLineOpenTerminateAfterInitResponseProcessingStage(t *testing.
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckActiveSettlementLine(t, nodeB, testconfig.Equivalent, "0", "0", "0")
 	nodeB.CheckActiveSettlementLine(t, nodeA, testconfig.Equivalent, "0", "0", "0")
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_terminate_on_initiator_resuming_stage
@@ -677,8 +677,8 @@ func TestSettlementLineOpenTerminateOnInitResumingStage(t *testing.T) {
 	// Python implies success here as well
 	nodeA.CheckActiveSettlementLine(t, nodeB, testconfig.Equivalent, "0", "0", "0")
 	nodeB.CheckActiveSettlementLine(t, nodeA, testconfig.Equivalent, "0", "0", "0")
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_terminate_after_initiator_resuming_stage
@@ -708,8 +708,8 @@ func TestSettlementLineOpenTerminateAfterInitResumingStage(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckActiveSettlementLine(t, nodeB, testconfig.Equivalent, "0", "0", "0")
 	nodeB.CheckActiveSettlementLine(t, nodeA, testconfig.Equivalent, "0", "0", "0")
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_terminate_on_contractor_stage
@@ -735,8 +735,8 @@ func TestSettlementLineOpenTerminateOnContractorStage(t *testing.T) {
 	// Python implies success
 	nodeA.CheckActiveSettlementLine(t, nodeB, testconfig.Equivalent, "0", "0", "0")
 	nodeB.CheckActiveSettlementLine(t, nodeA, testconfig.Equivalent, "0", "0", "0")
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // Corresponds to test_trustlines_open_terminate_after_contractor_stage
@@ -761,8 +761,8 @@ func TestSettlementLineOpenTerminateAfterContractorStage(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckActiveSettlementLine(t, nodeB, testconfig.Equivalent, "0", "0", "0")
 	nodeB.CheckActiveSettlementLine(t, nodeA, testconfig.Equivalent, "0", "0", "0")
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-1)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 }
 
 // TODO: Add case opening TL to contractor without channel

@@ -96,8 +96,8 @@ func TestSettlementLineKeysSharing256kbBandwidthInitiatorNode(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -123,8 +123,8 @@ func TestSettlementLineKeysSharing256kbBandwidthContractorNode(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -154,8 +154,8 @@ func TestSettlementLineKeysSharing256kbBandwidthBothNodes(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -181,8 +181,8 @@ func TestSettlementLineKeysSharing10PercentPacketLossInitiatorNode(t *testing.T)
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -208,8 +208,8 @@ func TestSettlementLineKeysSharing10PercentPacketLossContractorNode(t *testing.T
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -239,8 +239,8 @@ func TestSettlementLineKeysSharing10PercentPacketLossBothNodes(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -266,8 +266,8 @@ func TestSettlementLineKeysSharing10PercentPacketCorruptionInitiatorNode(t *test
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -293,8 +293,8 @@ func TestSettlementLineKeysSharing10PercentPacketCorruptionContractorNode(t *tes
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -324,8 +324,8 @@ func TestSettlementLineKeysSharing10PercentPacketCorruptionBothNodes(t *testing.
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -352,8 +352,8 @@ func TestSettlementLineKeysSharing10PercentPacketReorderingInitiatorNode(t *test
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -380,8 +380,8 @@ func TestSettlementLineKeysSharing10PercentPacketReorderingContractorNode(t *tes
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -412,8 +412,8 @@ func TestSettlementLineKeysSharing10PercentPacketReorderingBothNodes(t *testing.
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -439,8 +439,8 @@ func TestSettlementLineKeysSharing10PercentPacketDuplicationInitiatorNode(t *tes
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -466,8 +466,8 @@ func TestSettlementLineKeysSharing10PercentPacketDuplicationContractorNode(t *te
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -497,8 +497,8 @@ func TestSettlementLineKeysSharing10PercentPacketDuplicationBothNodes(t *testing
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -525,8 +525,8 @@ func TestSettlementLineKeysSharing200msDelayInitiatorNode(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -553,8 +553,8 @@ func TestSettlementLineKeysSharing200msDelayContractorNode(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }
@@ -585,8 +585,8 @@ func TestSettlementLineKeysSharing200msDelayBothNodes(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateActive)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateActive)
-	nodeA.CheckValidKeys(t, vtcp.DefaultKeysCount-1, vtcp.DefaultKeysCount-3) // Added based on python test
-	nodeB.CheckValidKeys(t, vtcp.DefaultKeysCount-3, vtcp.DefaultKeysCount-1) // Added based on python test
+	nodeA.CheckValidKeys(t) // Added based on python test
+	nodeB.CheckValidKeys(t) // Added based on python test
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 	nodeB.CheckSettlementLineForSync(t, nodeA, testconfig.Equivalent)
 }

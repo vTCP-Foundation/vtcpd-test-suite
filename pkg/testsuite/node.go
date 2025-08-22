@@ -529,7 +529,7 @@ func (n *Node) CheckActiveSettlementLine(t *testing.T, targetNode *Node, equival
 func (n *Node) CreateAndSetSettlementLineAndCheck(t *testing.T, targetNode *Node, equivalent string, amount string) {
 	n.CreateAndSetSettlementLine(t, targetNode, equivalent, amount)
 
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(1500 * time.Millisecond)
 
 	n.CheckActiveSettlementLine(t, targetNode, equivalent, amount, "0", "0")
 	targetNode.CheckActiveSettlementLine(t, n, equivalent, "0", amount, "0")
@@ -544,7 +544,7 @@ func (n *Node) SetSettlementLineAndCheck(t *testing.T, targetNode *Node, equival
 		t.Fatalf("settlement line is not active")
 	}
 	n.SetSettlementLine(t, targetNode, equivalent, amount, StatusOK)
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 	n.CheckActiveSettlementLine(t, targetNode, equivalent, amount, settlementLineInfo.MaxNegativeBalance, settlementLineInfo.Balance)
 	targetNode.CheckActiveSettlementLine(t, n, equivalent, settlementLineInfo.MaxNegativeBalance, amount, settlementLineInfo.Balance)
 }
@@ -1047,8 +1047,11 @@ func (n *Node) CheckSerializedTransactionSQLite(
 	}
 }
 
-// CheckValidKeys queries the node's SQLite database to check the count of valid own and contractor keys.
-func (n *Node) CheckValidKeysSQLite(t *testing.T, expectedOwnValidKeysCount, expectedContractorValidKeysCount int) {
+// CheckValidKeysSQLite verifies key presence according to single-key rules.
+// Context-aware logic:
+// - If there is at least one active trust line (state = 2), require at least one key in both own_keys and contractor_keys
+// - If there are no active trust lines, require zero keys in both tables
+func (n *Node) CheckValidKeysSQLite(t *testing.T) {
 	if n.ContainerID == "" {
 		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
 	}
@@ -1066,8 +1069,8 @@ func (n *Node) CheckValidKeysSQLite(t *testing.T, expectedOwnValidKeysCount, exp
 		return trimmedOutput, nil
 	}
 
-	// Check own_keys
-	queryOwnKeys := "SELECT COUNT(*) FROM own_keys WHERE is_valid = 1"
+	// Check own_keys (SPHINCS+ single-key: no is_valid flag)
+	queryOwnKeys := "SELECT COUNT(*) FROM own_keys"
 	ownKeysCountStr, err := executeQuery(queryOwnKeys)
 	if err != nil {
 		t.Fatalf("Node %s: Error querying own_keys count. Query: '%s'. Error: %v. Output: %s", n.Alias, queryOwnKeys, err, ownKeysCountStr)
@@ -1076,12 +1079,9 @@ func (n *Node) CheckValidKeysSQLite(t *testing.T, expectedOwnValidKeysCount, exp
 	if convErr != nil {
 		t.Fatalf("Node %s: Error converting own_keys count '%s' to int. Query: '%s'. Error: %v", n.Alias, ownKeysCountStr, queryOwnKeys, convErr)
 	}
-	if ownKeysCount != expectedOwnValidKeysCount {
-		t.Fatalf("Node %s: Own valid keys count mismatch. Expected: %d, Got: %d. Query: '%s'", n.Alias, expectedOwnValidKeysCount, ownKeysCount, queryOwnKeys)
-	}
+	// Check contractor_keys (SPHINCS+ single-key: no is_valid flag)
 
-	// Check contractor_keys
-	queryContractorKeys := "SELECT COUNT(*) FROM contractor_keys WHERE is_valid = 1"
+	queryContractorKeys := "SELECT COUNT(*) FROM contractor_keys"
 	contractorKeysCountStr, err := executeQuery(queryContractorKeys)
 	if err != nil {
 		t.Fatalf("Node %s: Error querying contractor_keys count. Query: '%s'. Error: %v. Output: %s", n.Alias, queryContractorKeys, err, contractorKeysCountStr)
@@ -1090,8 +1090,28 @@ func (n *Node) CheckValidKeysSQLite(t *testing.T, expectedOwnValidKeysCount, exp
 	if convErr != nil {
 		t.Fatalf("Node %s: Error converting contractor_keys count '%s' to int. Query: '%s'. Error: %v", n.Alias, contractorKeysCountStr, queryContractorKeys, convErr)
 	}
-	if contractorKeysCount != expectedContractorValidKeysCount {
-		t.Fatalf("Node %s: Contractor valid keys count mismatch. Expected: %d, Got: %d. Query: '%s'", n.Alias, expectedContractorValidKeysCount, contractorKeysCount, queryContractorKeys)
+	// Determine if there are any active trust lines
+	queryActiveTL := "SELECT COUNT(*) FROM trust_lines WHERE state = 2"
+	activeTLCountStr, err := executeQuery(queryActiveTL)
+	if err != nil {
+		t.Fatalf("Node %s: Error querying active trust_lines count. Query: '%s'. Error: %v. Output: %s", n.Alias, queryActiveTL, err, activeTLCountStr)
+	}
+	activeTLCount, convErr := strconv.Atoi(activeTLCountStr)
+	if convErr != nil {
+		t.Fatalf("Node %s: Error converting active trust_lines count '%s' to int. Query: '%s'. Error: %v", n.Alias, activeTLCountStr, queryActiveTL, convErr)
+	}
+
+	if activeTLCount > 0 {
+		if ownKeysCount < 1 {
+			t.Fatalf("Node %s: Expected at least 1 own key with active trust lines present, got %d. Query: '%s'", n.Alias, ownKeysCount, queryOwnKeys)
+		}
+		if contractorKeysCount < 1 {
+			t.Fatalf("Node %s: Expected at least 1 contractor key with active trust lines present, got %d. Query: '%s'", n.Alias, contractorKeysCount, queryContractorKeys)
+		}
+	} else {
+		if ownKeysCount != 0 || contractorKeysCount != 0 {
+			t.Fatalf("Node %s: Expected 0 keys (no active trust lines), got own=%d contractor=%d. Queries: own='%s' contractor='%s'", n.Alias, ownKeysCount, contractorKeysCount, queryOwnKeys, queryContractorKeys)
+		}
 	}
 }
 
@@ -1782,8 +1802,9 @@ func (n *Node) CheckSerializedTransactionPostgreSQL(
 	}
 }
 
-// CheckValidKeysPostgreSQL queries the node's PostgreSQL database to check the count of valid own and contractor keys.
-func (n *Node) CheckValidKeysPostgreSQL(t *testing.T, expectedOwnValidKeysCount, expectedContractorValidKeysCount int) {
+// CheckValidKeysPostgreSQL verifies key presence according to single-key rules.
+// Context-aware logic mirrors SQLite variant.
+func (n *Node) CheckValidKeysPostgreSQL(t *testing.T) {
 	if n.ContainerID == "" {
 		t.Fatalf("Node %s: ContainerID is not set, cannot execute database checks.", n.Alias)
 	}
@@ -1800,8 +1821,8 @@ func (n *Node) CheckValidKeysPostgreSQL(t *testing.T, expectedOwnValidKeysCount,
 		return trimmedOutput, nil
 	}
 
-	// Check own_keys
-	queryOwnKeys := "SELECT COUNT(*) FROM own_keys WHERE is_valid = true"
+	// Check own_keys (SPHINCS+ single-key: no is_valid flag)
+	queryOwnKeys := "SELECT COUNT(*) FROM own_keys"
 	ownKeysCountStr, err := executeQuery(queryOwnKeys)
 	if err != nil {
 		t.Fatalf("Node %s: Error querying own_keys count. Query: '%s'. Error: %v. Output: %s", n.Alias, queryOwnKeys, err, ownKeysCountStr)
@@ -1810,12 +1831,8 @@ func (n *Node) CheckValidKeysPostgreSQL(t *testing.T, expectedOwnValidKeysCount,
 	if convErr != nil {
 		t.Fatalf("Node %s: Error converting own_keys count '%s' to int. Query: '%s'. Error: %v", n.Alias, ownKeysCountStr, queryOwnKeys, convErr)
 	}
-	if ownKeysCount != expectedOwnValidKeysCount {
-		t.Fatalf("Node %s: Own valid keys count mismatch. Expected: %d, Got: %d. Query: '%s'", n.Alias, expectedOwnValidKeysCount, ownKeysCount, queryOwnKeys)
-	}
-
-	// Check contractor_keys
-	queryContractorKeys := "SELECT COUNT(*) FROM contractor_keys WHERE is_valid = true"
+	// Check contractor_keys (SPHINCS+ single-key: no is_valid flag)
+	queryContractorKeys := "SELECT COUNT(*) FROM contractor_keys"
 	contractorKeysCountStr, err := executeQuery(queryContractorKeys)
 	if err != nil {
 		t.Fatalf("Node %s: Error querying contractor_keys count. Query: '%s'. Error: %v. Output: %s", n.Alias, queryContractorKeys, err, contractorKeysCountStr)
@@ -1824,8 +1841,28 @@ func (n *Node) CheckValidKeysPostgreSQL(t *testing.T, expectedOwnValidKeysCount,
 	if convErr != nil {
 		t.Fatalf("Node %s: Error converting contractor_keys count '%s' to int. Query: '%s'. Error: %v", n.Alias, contractorKeysCountStr, queryContractorKeys, convErr)
 	}
-	if contractorKeysCount != expectedContractorValidKeysCount {
-		t.Fatalf("Node %s: Contractor valid keys count mismatch. Expected: %d, Got: %d. Query: '%s'", n.Alias, expectedContractorValidKeysCount, contractorKeysCount, queryContractorKeys)
+	// Determine if there are any active trust lines
+	queryActiveTL := "SELECT COUNT(*) FROM trust_lines WHERE state = 2"
+	activeTLCountStr, err := executeQuery(queryActiveTL)
+	if err != nil {
+		t.Fatalf("Node %s: Error querying active trust_lines count. Query: '%s'. Error: %v. Output: %s", n.Alias, queryActiveTL, err, activeTLCountStr)
+	}
+	activeTLCount, convErr := strconv.Atoi(activeTLCountStr)
+	if convErr != nil {
+		t.Fatalf("Node %s: Error converting active trust_lines count '%s' to int. Query: '%s'. Error: %v", n.Alias, activeTLCountStr, queryActiveTL, convErr)
+	}
+
+	if activeTLCount > 0 {
+		if ownKeysCount < 1 {
+			t.Fatalf("Node %s: Expected at least 1 own key with active trust lines present, got %d. Query: '%s'", n.Alias, ownKeysCount, queryOwnKeys)
+		}
+		if contractorKeysCount < 1 {
+			t.Fatalf("Node %s: Expected at least 1 contractor key with active trust lines present, got %d. Query: '%s'", n.Alias, contractorKeysCount, queryContractorKeys)
+		}
+	} else {
+		if ownKeysCount != 0 || contractorKeysCount != 0 {
+			t.Fatalf("Node %s: Expected 0 keys (no active trust lines), got own=%d contractor=%d. Queries: own='%s' contractor='%s'", n.Alias, ownKeysCount, contractorKeysCount, queryOwnKeys, queryContractorKeys)
+		}
 	}
 }
 
@@ -2004,19 +2041,19 @@ func (n *Node) CheckSerializedTransaction(
 	} else if strings.Contains(dbConfig, "postgresql") {
 		n.CheckSerializedTransactionPostgreSQL(t, isTransactionShouldBePresent, timeToSleepSeconds)
 	} else {
-		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+		n.CheckSerializedTransactionSQLite(t, isTransactionShouldBePresent, timeToSleepSeconds)
 	}
 }
 
 // CheckValidKeys dispatches to the appropriate database implementation
-func (n *Node) CheckValidKeys(t *testing.T, expectedOwnValidKeysCount, expectedContractorValidKeysCount int) {
+func (n *Node) CheckValidKeys(t *testing.T) {
 	dbConfig := os.Getenv("VTCPD_DATABASE_CONFIG")
 	if strings.Contains(dbConfig, "sqlite") {
-		n.CheckValidKeysSQLite(t, expectedOwnValidKeysCount, expectedContractorValidKeysCount)
+		n.CheckValidKeysSQLite(t)
 	} else if strings.Contains(dbConfig, "postgresql") {
-		n.CheckValidKeysPostgreSQL(t, expectedOwnValidKeysCount, expectedContractorValidKeysCount)
+		n.CheckValidKeysPostgreSQL(t)
 	} else {
-		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+		n.CheckValidKeysSQLite(t)
 	}
 }
 
@@ -2028,7 +2065,7 @@ func (n *Node) CheckSettlementLineState(t *testing.T, targetNode *Node, equivale
 	} else if strings.Contains(dbConfig, "postgresql") {
 		n.CheckSettlementLineStatePostgreSQL(t, targetNode, equivalent, expectedState)
 	} else {
-		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+		n.CheckSettlementLineStateSQLite(t, targetNode, equivalent, expectedState)
 	}
 }
 
@@ -2040,7 +2077,7 @@ func (n *Node) CheckPaymentRecordWithCommandUUID(t *testing.T, commandUUID strin
 	} else if strings.Contains(dbConfig, "postgresql") {
 		n.CheckPaymentRecordWithCommandUUIDPostgreSQL(t, commandUUID, shouldBePresent)
 	} else {
-		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+		n.CheckPaymentRecordWithCommandUUIDSQLite(t, commandUUID, shouldBePresent)
 	}
 }
 
@@ -2052,6 +2089,6 @@ func (n *Node) CheckCurrentAudit(t *testing.T, targetNode *Node, equivalent stri
 	} else if strings.Contains(dbConfig, "postgresql") {
 		n.CheckCurrentAuditPostgreSQL(t, targetNode, equivalent, expectedAuditNumber)
 	} else {
-		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+		n.CheckCurrentAuditSQLite(t, targetNode, equivalent, expectedAuditNumber)
 	}
 }

@@ -1,4 +1,79 @@
 ###################################################################################
+# Builder for Ubuntu: OpenSSL (>=3.5 dev), liboqs, oqs-provider
+FROM ubuntu:24.04 AS builder-ubuntu-crypto
+ARG DEBIAN_FRONTEND=noninteractive
+ARG OPENSSL_REF=master
+ARG LIBOQS_REF=main
+ARG OQS_PROVIDER_REF=main
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential ca-certificates git curl wget perl pkg-config \
+      cmake ninja-build python3 zlib1g-dev && \
+    rm -rf /var/lib/apt/lists/*
+# Build OpenSSL from source (master → 3.5.0-dev at time of build)
+RUN git clone --depth 1 --branch "$OPENSSL_REF" https://github.com/openssl/openssl.git /tmp/openssl && \
+    cd /tmp/openssl && \
+    env LDFLAGS='-Wl,-rpath,/usr/local/lib:/usr/local/lib64' ./Configure --prefix=/usr/local --openssldir=/usr/local/ssl shared && \
+    make -j"$(nproc)" && make install_sw && \
+    rm -rf /tmp/openssl
+# Build liboqs
+RUN git clone --depth 1 --branch "$LIBOQS_REF" https://github.com/open-quantum-safe/liboqs.git /tmp/liboqs && \
+    cmake -S /tmp/liboqs -B /tmp/liboqs/build -GNinja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DOQS_BUILD_ONLY_LIB=ON \
+      -DBUILD_SHARED_LIBS=ON \
+      -DOQS_DIST_BUILD=ON && \
+    ninja -C /tmp/liboqs/build && ninja -C /tmp/liboqs/build install && \
+    rm -rf /tmp/liboqs
+# Build oqs-provider (installs into /usr/local/lib/ossl-modules)
+RUN git clone --depth 1 --branch "$OQS_PROVIDER_REF" https://github.com/open-quantum-safe/oqs-provider.git /tmp/oqs-provider && \
+    cmake -S /tmp/oqs-provider -B /tmp/oqs-provider/build -GNinja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DOPENSSL_ROOT_DIR=/usr/local \
+      -DLIBOQS_INSTALL_DIR=/usr/local && \
+    ninja -C /tmp/oqs-provider/build && ninja -C /tmp/oqs-provider/build install && \
+    rm -rf /tmp/oqs-provider
+
+###################################################################################
+# Builder for Manjaro: OpenSSL (>=3.5 dev), liboqs, oqs-provider
+FROM manjarolinux/base AS builder-manjaro-crypto
+ARG OPENSSL_REF=master
+ARG LIBOQS_REF=main
+ARG OQS_PROVIDER_REF=main
+RUN pacman -Syu --noconfirm && \
+    pacman -S --noconfirm \
+      base-devel git cmake ninja perl python \
+      zlib && \
+    true
+# Build OpenSSL from source (master → 3.5.0-dev at time of build)
+RUN git clone --depth 1 --branch "$OPENSSL_REF" https://github.com/openssl/openssl.git /tmp/openssl && \
+    cd /tmp/openssl && \
+    env LDFLAGS='-Wl,-rpath,/usr/local/lib:/usr/local/lib64' ./Configure --prefix=/usr/local --openssldir=/usr/local/ssl shared && \
+    make -j"$(nproc)" && make install_sw && \
+    rm -rf /tmp/openssl
+# Build liboqs
+RUN git clone --depth 1 --branch "$LIBOQS_REF" https://github.com/open-quantum-safe/liboqs.git /tmp/liboqs && \
+    cmake -S /tmp/liboqs -B /tmp/liboqs/build -GNinja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DOQS_BUILD_ONLY_LIB=ON \
+      -DBUILD_SHARED_LIBS=ON \
+      -DOQS_DIST_BUILD=ON && \
+    ninja -C /tmp/liboqs/build && ninja -C /tmp/liboqs/build install && \
+    rm -rf /tmp/liboqs
+# Build oqs-provider
+RUN git clone --depth 1 --branch "$OQS_PROVIDER_REF" https://github.com/open-quantum-safe/oqs-provider.git /tmp/oqs-provider && \
+    cmake -S /tmp/oqs-provider -B /tmp/oqs-provider/build -GNinja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DOPENSSL_ROOT_DIR=/usr/local \
+      -DLIBOQS_INSTALL_DIR=/usr/local && \
+    ninja -C /tmp/oqs-provider/build && ninja -C /tmp/oqs-provider/build install && \
+    rm -rf /tmp/oqs-provider
+
+###################################################################################
 # Manjaro Linux runtime environment
 FROM manjarolinux/base AS runtime-manjaro
 RUN pacman -Syu --noconfirm && \
@@ -16,6 +91,14 @@ RUN pacman -Syu --noconfirm && \
     ls -la /usr/lib/libsodium* && \
     echo "Library dependencies:" && \
     ldd /vtcpd/vtcpd || true
+# Install custom-built OpenSSL + oqs-provider from builder
+COPY --from=builder-manjaro-crypto /usr/local /usr/local
+ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64
+RUN echo '/usr/local/lib' > /etc/ld.so.conf.d/00-openssl_local.conf && echo '/usr/local/lib64' >> /etc/ld.so.conf.d/00-openssl_local.conf && ldconfig && \
+    /usr/local/bin/openssl version && \
+    bash -lc '/usr/local/bin/openssl version | grep -Eq "OpenSSL 3\.(5|[6-9])|OpenSSL [4-9]\\."' && \
+    MODULES_DIR=$([ -f /usr/local/lib64/ossl-modules/oqsprovider.so ] && echo /usr/local/lib64/ossl-modules || echo /usr/local/lib/ossl-modules) && \
+    /usr/local/bin/openssl list -signature-algorithms -provider oqsprovider -provider-path "$MODULES_DIR" -provider default | grep -Ei 'slh-.*dsa|sphincs'
 
 # Create a non-root user for running the daemon
 RUN useradd -r -s /usr/bin/nologin vtcpd && \
@@ -31,11 +114,15 @@ RUN apt-get update && \
     libboost-system1.83.0 \
     libboost-filesystem1.83.0 \
     libboost-program-options1.83.0 \
+    libboost-atomic1.83.0 \
+    libboost-thread1.83.0 \
+    libboost-date-time1.83.0 \
     libsodium23 \
     libpq5 \
     postgresql-16 \
     postgresql-client-16 \
     libasan8 \
+    libubsan1 \
     vim \
     sqlite3 && \
     ln -s /usr/lib/postgresql/*/bin/pg_ctl /usr/local/bin/pg_ctl && \
@@ -44,6 +131,14 @@ RUN apt-get update && \
     useradd -r -s /usr/sbin/nologin vtcpd && \
     # Create postgres user for database operations
     useradd -r -s /bin/bash postgres || true
+# Install custom-built OpenSSL + oqs-provider from builder
+COPY --from=builder-ubuntu-crypto /usr/local /usr/local
+ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64
+RUN bash -lc 'echo /usr/local/lib > /etc/ld.so.conf.d/00-openssl_local.conf' && echo /usr/local/lib64 >> /etc/ld.so.conf.d/00-openssl_local.conf && ldconfig && \
+    /usr/local/bin/openssl version && \
+    bash -lc '/usr/local/bin/openssl version | grep -Eq "OpenSSL 3\.(5|[6-9])|OpenSSL [4-9]\\."' && \
+    MODULES_DIR=$([ -f /usr/local/lib64/ossl-modules/oqsprovider.so ] && echo /usr/local/lib64/ossl-modules || echo /usr/local/lib/ossl-modules) && \
+    /usr/local/bin/openssl list -signature-algorithms -provider oqsprovider -provider-path "$MODULES_DIR" -provider default | grep -Ei 'slh-.*dsa|sphincs'
 
 
 ###################################################################################
@@ -114,7 +209,6 @@ RUN chmod 700 /var/lib/postgresql/data
 # Create vtcpd directory and set permissions
 RUN mkdir -p /vtcpd
 WORKDIR /vtcpd
-RUN mkdir -p vtcpd
 
 # Copy pre-built binaries from host
 COPY ./deps/vtcpd /vtcpd/

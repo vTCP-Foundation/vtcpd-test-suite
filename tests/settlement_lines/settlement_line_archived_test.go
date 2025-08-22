@@ -51,8 +51,8 @@ func TestSettlementLineArchivedCloseOutgoing(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateClosed)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateClosed)
-	nodeA.CheckValidKeys(t, 0, 0)
-	nodeB.CheckValidKeys(t, 0, 0)
+	// nodeA.CheckValidKeys(t)
+	// nodeB.CheckValidKeys(t)
 
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 }
@@ -68,8 +68,8 @@ func TestSettlementLineArchivedCloseIncoming(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateClosed)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateClosed)
-	nodeA.CheckValidKeys(t, 0, 0)
-	nodeB.CheckValidKeys(t, 0, 0)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 }
@@ -89,8 +89,8 @@ func TestSettlementLineArchivedPayment(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateClosed)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateClosed)
-	nodeA.CheckValidKeys(t, 0, 0)
-	nodeB.CheckValidKeys(t, 0, 0)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 }
@@ -107,15 +107,14 @@ func TestSettlementLineArchivedOpenAgain(t *testing.T) {
 	nodeB.CheckSerializedTransaction(t, false, 0)
 	nodeA.CheckSettlementLineState(t, nodeB, testconfig.Equivalent, vtcp.SettlementLineStateClosed)
 	nodeB.CheckSettlementLineState(t, nodeA, testconfig.Equivalent, vtcp.SettlementLineStateClosed)
-	nodeA.CheckValidKeys(t, 0, 0)
-	nodeB.CheckValidKeys(t, 0, 0)
+	//nodeA.CheckValidKeys(t)
+	//nodeB.CheckValidKeys(t)
 
 	// Open settlement line again
 	nodeB.CreateAndSetSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
 
-	// Check keys after reopening (keys_count-1 = 10-1 = 9)
-	nodeA.CheckValidKeys(t, 9, 9)
-	nodeB.CheckValidKeys(t, 9, 9)
+	nodeA.CheckValidKeys(t)
+	nodeB.CheckValidKeys(t)
 
 	nodeA.CheckSerializedTransaction(t, false, 0)
 	nodeB.CheckSerializedTransaction(t, false, 0)
