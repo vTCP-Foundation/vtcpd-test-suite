@@ -4,3 +4,6 @@
 [submodule "vtcpd"]
 	path = vtcpd
 	url = git@github.com:vTCP-Foundation/vtcpd.git
+[submodule "vtcpd-cli"]
+	path = vtcpd-cli
+	url = git@github.com:vTCP-Foundation/vtcpd-cli.git

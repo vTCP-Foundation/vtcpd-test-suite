@@ -185,6 +185,23 @@ type MaxFlowBatchCheck struct {
 	ExpectedMaxFlow string
 }
 
+// Exchange rates related types
+type RateItem struct {
+	EquivalentFrom            string `json:"equivalent_from"`
+	EquivalentTo              string `json:"equivalent_to"`
+	Value                     string `json:"value"`
+	Shift                     int16  `json:"shift"`
+	RealRate                  string `json:"real_rate"`
+	MinExchangeAmount         string `json:"min_exchange_amount"`
+	MaxExchangeAmount         string `json:"max_exchange_amount"`
+	ExpiresAtUnixMicroseconds string `json:"expires_at_unix_microseconds"`
+}
+
+type RatesListResponse struct {
+	Count int        `json:"count"`
+	Rates []RateItem `json:"rates"`
+}
+
 func NewNode(t *testing.T, ipAddress string, alias string) *Node {
 	return &Node{
 		ID:          uuid.New().String(),
@@ -2053,5 +2070,171 @@ func (n *Node) CheckCurrentAudit(t *testing.T, targetNode *Node, equivalent stri
 		n.CheckCurrentAuditPostgreSQL(t, targetNode, equivalent, expectedAuditNumber)
 	} else {
 		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+	}
+}
+
+// Exchange rates methods
+
+// SetExchangeRate sets an exchange rate using real decimal format
+func (n *Node) SetExchangeRate(t *testing.T, equivalentFrom, equivalentTo, realRate string, minAmount, maxAmount *string) {
+	url := fmt.Sprintf("http://%s:%d/api/v1/node/rates/%s/%s/?real_rate=%s",
+		n.IPAddress, n.CLIPort, equivalentFrom, equivalentTo, realRate)
+
+	// Add optional parameters
+	if minAmount != nil {
+		url += "&min_exchange_amount=" + *minAmount
+	}
+	if maxAmount != nil {
+		url += "&max_exchange_amount=" + *maxAmount
+	}
+
+	request, err := http.NewRequest(http.MethodPost, url, nil)
+	if err != nil {
+		t.Fatalf("failed to create set-exchange-rate request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("failed to send set-exchange-rate request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("set-exchange-rate request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+}
+
+// SetExchangeRateNative sets an exchange rate using native value+shift format
+func (n *Node) SetExchangeRateNative(t *testing.T, equivalentFrom, equivalentTo, value string, shift int16, minAmount, maxAmount *string) {
+	url := fmt.Sprintf("http://%s:%d/api/v1/node/rates/%s/%s/?value=%s&shift=%d",
+		n.IPAddress, n.CLIPort, equivalentFrom, equivalentTo, value, shift)
+
+	// Add optional parameters
+	if minAmount != nil {
+		url += "&min_exchange_amount=" + *minAmount
+	}
+	if maxAmount != nil {
+		url += "&max_exchange_amount=" + *maxAmount
+	}
+
+	request, err := http.NewRequest(http.MethodPost, url, nil)
+	if err != nil {
+		t.Fatalf("failed to create set-exchange-rate-native request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("failed to send set-exchange-rate-native request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("set-exchange-rate-native request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+}
+
+// GetExchangeRate retrieves a specific exchange rate
+func (n *Node) GetExchangeRate(t *testing.T, equivalentFrom, equivalentTo string) *RateItem {
+	url := fmt.Sprintf("http://%s:%d/api/v1/node/rates/%s/%s/",
+		n.IPAddress, n.CLIPort, equivalentFrom, equivalentTo)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatalf("failed to send get-exchange-rate request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("get-exchange-rate request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var result struct {
+		Data struct {
+			Rate RateItem `json:"rate"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode get-exchange-rate response: %v", err)
+	}
+
+	return &result.Data.Rate
+}
+
+// ListExchangeRates retrieves all exchange rates
+func (n *Node) ListExchangeRates(t *testing.T) *RatesListResponse {
+	url := fmt.Sprintf("http://%s:%d/api/v1/node/rates/", n.IPAddress, n.CLIPort)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatalf("failed to send list-exchange-rates request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("list-exchange-rates request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var result struct {
+		Data RatesListResponse `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode list-exchange-rates response: %v", err)
+	}
+
+	return &result.Data
+}
+
+// DeleteExchangeRate deletes a specific exchange rate
+func (n *Node) DeleteExchangeRate(t *testing.T, equivalentFrom, equivalentTo string) {
+	url := fmt.Sprintf("http://%s:%d/api/v1/node/rates/%s/%s/",
+		n.IPAddress, n.CLIPort, equivalentFrom, equivalentTo)
+
+	request, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		t.Fatalf("failed to create delete-exchange-rate request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("failed to send delete-exchange-rate request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("delete-exchange-rate request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+}
+
+// ClearExchangeRates deletes all exchange rates
+func (n *Node) ClearExchangeRates(t *testing.T) {
+	url := fmt.Sprintf("http://%s:%d/api/v1/node/rates/", n.IPAddress, n.CLIPort)
+
+	request, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		t.Fatalf("failed to create clear-exchange-rates request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("failed to send clear-exchange-rates request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("clear-exchange-rates request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
 	}
 }
