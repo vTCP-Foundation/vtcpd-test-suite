@@ -2076,7 +2076,7 @@ func (n *Node) CheckCurrentAudit(t *testing.T, targetNode *Node, equivalent stri
 // Exchange rates methods
 
 // SetExchangeRate sets an exchange rate using real decimal format
-func (n *Node) SetExchangeRate(t *testing.T, equivalentFrom, equivalentTo, realRate string, minAmount, maxAmount *string) {
+func (n *Node) SetExchangeRate(t *testing.T, equivalentFrom, equivalentTo, realRate string, minAmount, maxAmount *string, expectedStatusCode int) {
 	url := fmt.Sprintf("http://%s:%d/api/v1/node/rates/%s/%s/?real_rate=%s",
 		n.IPAddress, n.CLIPort, equivalentFrom, equivalentTo, realRate)
 
@@ -2101,14 +2101,14 @@ func (n *Node) SetExchangeRate(t *testing.T, equivalentFrom, equivalentTo, realR
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != expectedStatusCode {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		t.Fatalf("set-exchange-rate request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+		t.Fatalf("set-exchange-rate request returned unexpected status: expected %d, got %d, body: %s", expectedStatusCode, resp.StatusCode, string(bodyBytes))
 	}
 }
 
 // SetExchangeRateNative sets an exchange rate using native value+shift format
-func (n *Node) SetExchangeRateNative(t *testing.T, equivalentFrom, equivalentTo, value string, shift int16, minAmount, maxAmount *string) {
+func (n *Node) SetExchangeRateNative(t *testing.T, equivalentFrom, equivalentTo, value string, shift int16, minAmount, maxAmount *string, expectedStatusCode int) {
 	url := fmt.Sprintf("http://%s:%d/api/v1/node/rates/%s/%s/?value=%s&shift=%d",
 		n.IPAddress, n.CLIPort, equivalentFrom, equivalentTo, value, shift)
 
@@ -2133,14 +2133,46 @@ func (n *Node) SetExchangeRateNative(t *testing.T, equivalentFrom, equivalentTo,
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != expectedStatusCode {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		t.Fatalf("set-exchange-rate-native request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+		t.Fatalf("set-exchange-rate-native request returned unexpected status: expected %d, got %d, body: %s", expectedStatusCode, resp.StatusCode, string(bodyBytes))
+	}
+}
+
+// SetExchangeRateWithConflictingParameters sets exchange rate with both real_rate and native parameters to test validation
+func (n *Node) SetExchangeRateWithConflictingParameters(t *testing.T, equivalentFrom, equivalentTo, realRate, value string, shift int16, minAmount, maxAmount *string, expectedStatusCode int) {
+	url := fmt.Sprintf("http://%s:%d/api/v1/node/rates/%s/%s/?real_rate=%s&value=%s&shift=%d",
+		n.IPAddress, n.CLIPort, equivalentFrom, equivalentTo, realRate, value, shift)
+
+	// Add optional parameters
+	if minAmount != nil {
+		url += "&min_exchange_amount=" + *minAmount
+	}
+	if maxAmount != nil {
+		url += "&max_exchange_amount=" + *maxAmount
+	}
+
+	request, err := http.NewRequest(http.MethodPost, url, nil)
+	if err != nil {
+		t.Fatalf("failed to create set-exchange-rate-conflicting request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("failed to send set-exchange-rate-conflicting request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != expectedStatusCode {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("set-exchange-rate-conflicting request returned unexpected status: expected %d, got %d, body: %s", expectedStatusCode, resp.StatusCode, string(bodyBytes))
 	}
 }
 
 // GetExchangeRate retrieves a specific exchange rate
-func (n *Node) GetExchangeRate(t *testing.T, equivalentFrom, equivalentTo string) *RateItem {
+func (n *Node) GetExchangeRate(t *testing.T, equivalentFrom, equivalentTo string, expectedStatusCode int) *RateItem {
 	url := fmt.Sprintf("http://%s:%d/api/v1/node/rates/%s/%s/",
 		n.IPAddress, n.CLIPort, equivalentFrom, equivalentTo)
 
@@ -2150,9 +2182,14 @@ func (n *Node) GetExchangeRate(t *testing.T, equivalentFrom, equivalentTo string
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != expectedStatusCode {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		t.Fatalf("get-exchange-rate request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+		t.Fatalf("get-exchange-rate request returned unexpected status: expected %d, got %d, body: %s", expectedStatusCode, resp.StatusCode, string(bodyBytes))
+	}
+
+	// If expected status is not 200, don't try to decode the response body as it might be an error
+	if expectedStatusCode != http.StatusOK {
+		return nil
 	}
 
 	var result struct {
