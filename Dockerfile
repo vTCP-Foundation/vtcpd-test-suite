@@ -3,8 +3,12 @@
 FROM manjarolinux/base AS runtime-manjaro
 RUN pacman -Syu --noconfirm && \
     pacman -S --noconfirm \
-    boost \
-    boost-libs \
+    ca-certificates \
+    curl \
+    git \
+    cmake \
+    make \
+    rsync \
     libsodium \
     postgresql-libs \
     postgresql \
@@ -12,7 +16,7 @@ RUN pacman -Syu --noconfirm && \
     sqlite && \
     # Debug library locations
     echo "Library locations:" && \
-    ls -la /usr/lib/libboost_* && \
+    ls -la /usr/lib/libboost_* || true && \
     ls -la /usr/lib/libsodium* && \
     echo "Library dependencies:" && \
     ldd /vtcpd/vtcpd || true
@@ -22,20 +26,51 @@ RUN useradd -r -s /usr/bin/nologin vtcpd && \
     # Create postgres user for database operations
     useradd -r -s /bin/bash postgres || true
 
+# --- OR-Tools (source build for Manjaro) ---
+ARG ORTOOLS_VER=v9.14
+ARG ORTOOLS_ROOT=/opt/or-tools-${ORTOOLS_VER#v}
+RUN set -eux; \
+    cd /tmp && git clone https://github.com/google/or-tools.git && cd or-tools; \
+    git checkout "${ORTOOLS_VER}"; \
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_DEPS=ON -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_PYTHON=OFF -DBUILD_JAVA=OFF -DBUILD_DOTNET=OFF; \
+    cmake --build build -j; \
+    cmake --install build --prefix "${ORTOOLS_ROOT}"; \
+    ln -sfn "${ORTOOLS_ROOT}" /opt/or-tools; \
+    if [ -d "${ORTOOLS_ROOT}/lib" ]; then echo "${ORTOOLS_ROOT}/lib" > /etc/ld.so.conf.d/ortools.conf; ldconfig; fi; \
+    rm -rf /tmp/or-tools
+ENV CMAKE_PREFIX_PATH=/opt/or-tools
+
+# --- Boost (source build 1.87.0 for Manjaro) ---
+ARG BOOST_VER=1.87.0
+ARG BOOST_DIR=boost_1_87_0
+ARG BOOST_ROOT=/opt/boost-${BOOST_VER}
+RUN set -eux; \
+    cd /tmp && curl -fL -o boost.tar.gz https://archives.boost.io/release/${BOOST_VER}/source/${BOOST_DIR}.tar.gz; \
+    tar -xzf boost.tar.gz && cd ${BOOST_DIR}; \
+    ./bootstrap.sh --prefix="${BOOST_ROOT}"; \
+    ./b2 -j$(nproc) --with-system --with-filesystem --with-program_options --with-thread --with-date_time --with-atomic install; \
+    ln -sfn "${BOOST_ROOT}" /opt/boost; \
+    if [ -d "${BOOST_ROOT}/lib" ]; then echo "${BOOST_ROOT}/lib" > /etc/ld.so.conf.d/boost.conf; ldconfig; fi; \
+    rm -rf /tmp/boost.tar.gz "/tmp/${BOOST_DIR}"
+
 
 ###################################################################################
 # Ubuntu runtime environment
 FROM ubuntu:24.04 AS runtime-ubuntu
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    libboost-system1.83.0 \
-    libboost-filesystem1.83.0 \
-    libboost-program-options1.83.0 \
+    build-essential \
     libsodium23 \
     libpq5 \
     postgresql-16 \
     postgresql-client-16 \
     libasan8 \
+    libubsan1 \
+    ca-certificates \
+    curl \
+    xz-utils \
+    unzip \
+    rsync \
     vim \
     sqlite3 && \
     ln -s /usr/lib/postgresql/*/bin/pg_ctl /usr/local/bin/pg_ctl && \
@@ -44,6 +79,57 @@ RUN apt-get update && \
     useradd -r -s /usr/sbin/nologin vtcpd && \
     # Create postgres user for database operations
     useradd -r -s /bin/bash postgres || true
+
+# --- OR-Tools (prebuilt C++ archive for Ubuntu) ---
+ARG ORTOOLS_VER=v9.14
+ARG ORTOOLS_ROOT=/opt/or-tools-${ORTOOLS_VER#v}
+# Provide a fixed URL via build-arg to avoid API rate limits or variability.
+# Defaults to the Ubuntu 24.04 C++ prebuilt archive for v9.14.
+# Override at build time if needed:
+#   --build-arg ORTOOLS_PREBUILT_URL=https://github.com/google/or-tools/releases/download/v9.14/or-tools_amd64_ubuntu-24.04_cpp_v9.14.6206.tar.gz
+ARG ORTOOLS_PREBUILT_URL="https://github.com/google/or-tools/releases/download/v9.14/or-tools_amd64_ubuntu-24.04_cpp_v9.14.6206.tar.gz"
+RUN set -eux; \
+    mkdir -p "${ORTOOLS_ROOT}" /tmp/ortools && cd /tmp/ortools; \
+    if [ -n "${ORTOOLS_PREBUILT_URL}" ]; then \
+      URL="${ORTOOLS_PREBUILT_URL}"; \
+    else \
+      URLS=$(curl -fsSL "https://api.github.com/repos/google/or-tools/releases/tags/${ORTOOLS_VER}" | awk -F\" '/browser_download_url/ {print $4}'); \
+      echo "${URLS}" > urls.txt; \
+      URL=$(echo "${URLS}" | grep -Ei 'linux.*(cpp|c\+\+)' | grep -Ei '(x86_64|amd64|linux64|ubuntu)' | head -n1 || true); \
+      if [ -z "${URL}" ]; then echo "No matching OR-Tools asset found. Inspect /tmp/ortools/urls.txt"; exit 1; fi; \
+      echo "Using: ${URL}"; \
+    fi; \
+    curl -fL -o or-tools.pkg "${URL}"; \
+    case "${URL}" in \
+      *.zip) unzip -q or-tools.pkg ;; \
+      *.tar.gz) tar -xzf or-tools.pkg ;; \
+      *.tar.xz) tar -xJf or-tools.pkg ;; \
+      *) echo "Unknown archive format: ${URL}"; exit 1 ;; \
+    esac; \
+    ROOT_DIR=$(find . -maxdepth 1 -type d -name 'or-tools*' -print -quit); \
+    rsync -a "${ROOT_DIR}"/ "${ORTOOLS_ROOT}"/; \
+    ln -sfn "${ORTOOLS_ROOT}" /opt/or-tools; \
+    if [ -d "${ORTOOLS_ROOT}/lib" ]; then echo "${ORTOOLS_ROOT}/lib" > /etc/ld.so.conf.d/ortools.conf; ldconfig; fi; \
+    rm -rf /tmp/ortools
+ENV CMAKE_PREFIX_PATH=/opt/or-tools
+
+# --- Boost (source build 1.87.0 for Ubuntu) ---
+ARG BOOST_VER=1.87.0
+ARG BOOST_DIR=boost_1_87_0
+ARG BOOST_ROOT=/opt/boost-${BOOST_VER}
+RUN set -eux; \
+    mkdir -p /tmp/boost && cd /tmp/boost; \
+    for URL in \
+      "https://archives.boost.io/release/${BOOST_VER}/source/${BOOST_DIR}.tar.gz" \
+      "https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VER}/source/${BOOST_DIR}.tar.gz"; do \
+      if curl -fL -o boost.tar.gz "$URL"; then break; fi; \
+    done; \
+    tar -xzf boost.tar.gz && cd ${BOOST_DIR}; \
+    ./bootstrap.sh --prefix="${BOOST_ROOT}"; \
+    ./b2 -j$(nproc) --with-system --with-filesystem --with-program_options --with-thread --with-date_time --with-atomic install; \
+    ln -sfn "${BOOST_ROOT}" /opt/boost; \
+    if [ -d "${BOOST_ROOT}/lib" ]; then echo "${BOOST_ROOT}/lib" > /etc/ld.so.conf.d/boost.conf; ldconfig; fi; \
+    rm -rf /tmp/boost
 
 
 ###################################################################################
