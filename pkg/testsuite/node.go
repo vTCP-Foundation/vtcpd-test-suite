@@ -406,7 +406,7 @@ func (n *Node) OpenChannelAndCheck(t *testing.T, targetNode *Node) {
 // It first calls init-settlement-line and sets the max positive balance.
 func (n *Node) CreateAndSetSettlementLine(t *testing.T, targetNode *Node, equivalent string, amount string) {
 	n.CreateSettlementLine(t, targetNode, equivalent)
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 	n.SetSettlementLine(t, targetNode, equivalent, amount, StatusOK)
 }
 
@@ -546,7 +546,7 @@ func (n *Node) CheckActiveSettlementLine(t *testing.T, targetNode *Node, equival
 func (n *Node) CreateAndSetSettlementLineAndCheck(t *testing.T, targetNode *Node, equivalent string, amount string) {
 	n.CreateAndSetSettlementLine(t, targetNode, equivalent, amount)
 
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(1500 * time.Millisecond)
 
 	n.CheckActiveSettlementLine(t, targetNode, equivalent, amount, "0", "0")
 	targetNode.CheckActiveSettlementLine(t, n, equivalent, "0", amount, "0")
@@ -872,6 +872,157 @@ func (n *Node) CheckMaxFlowBatch(t *testing.T, checks []MaxFlowBatchCheck, equiv
 		}
 		if actualMaxAmount != check.ExpectedMaxFlow {
 			t.Fatalf("max-flow for node %s (address %s) is wrong. expected: %s, got: %s",
+				check.Node.Alias, nodeAddress, check.ExpectedMaxFlow, actualMaxAmount)
+		}
+	}
+}
+
+func (n *Node) GetExchangeMaxFlow(t *testing.T, targetNode *Node, equivalent string, exchangeEquivalents []string) (string, error) {
+	baseURL := fmt.Sprintf("http://%s:%d/api/v1/node/contractors/transactions/exchange/max/%s/",
+		n.IPAddress, n.CLIPort, equivalent)
+
+	var queryParams []string
+	queryParams = append(queryParams, fmt.Sprintf("contractor_address=%s", targetNode.GetIPAddressForRequests()))
+
+	for _, eq := range exchangeEquivalents {
+		queryParams = append(queryParams, fmt.Sprintf("exchange_equivalent=%s", eq))
+	}
+
+	url := baseURL + "?" + queryParams[0]
+	if len(queryParams) > 1 {
+		for i := 1; i < len(queryParams); i++ {
+			url += "&" + queryParams[i]
+		}
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("failed to send exchange max-flow request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("exchange max-flow request failed with status: %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Data MaxFlowInfo `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("failed to decode exchange max-flow response: %w", err)
+	}
+	println(fmt.Sprintf("exchange max-flow response: %+v", result.Data))
+
+	if result.Data.Count != 1 {
+		return "", fmt.Errorf("exchange max-flow response has wrong count. expected: 1, got: %d", result.Data.Count)
+	}
+
+	return result.Data.Records[0].MaxAmount, nil
+}
+
+func (n *Node) CheckExchangeMaxFlow(t *testing.T, targetNode *Node, equivalent string, exchangeEquivalents []string, expectedMaxFlow string) {
+	maxFlow, err := n.GetExchangeMaxFlow(t, targetNode, equivalent, exchangeEquivalents)
+	if err != nil {
+		t.Fatalf("failed to get exchange max-flow: %v", err)
+	}
+	if maxFlow != expectedMaxFlow {
+		t.Fatalf("exchange max-flow is wrong. expected: %s, got: %s", expectedMaxFlow, maxFlow)
+	}
+}
+
+func (n *Node) GetExchangeMaxFlowBatch(t *testing.T, targetNodes []*Node, equivalent string, exchangeEquivalents []string) []MaxFlowBatchResult {
+	if len(targetNodes) == 0 {
+		return []MaxFlowBatchResult{}
+	}
+
+	baseURL := fmt.Sprintf("http://%s:%d/api/v1/node/contractors/transactions/exchange/max/%s/",
+		n.IPAddress, n.CLIPort, equivalent)
+
+	var queryParams []string
+	for _, targetNode := range targetNodes {
+		queryParams = append(queryParams, fmt.Sprintf("contractor_address=%s", targetNode.GetIPAddressForRequests()))
+	}
+
+	for _, eq := range exchangeEquivalents {
+		queryParams = append(queryParams, fmt.Sprintf("exchange_equivalent=%s", eq))
+	}
+
+	url := baseURL + "?" + queryParams[0]
+	if len(queryParams) > 1 {
+		for i := 1; i < len(queryParams); i++ {
+			url += "&" + queryParams[i]
+		}
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatalf("failed to send exchange max-flow batch request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("exchange max-flow batch request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var result struct {
+		Data MaxFlowInfo `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode exchange max-flow batch response: %v", err)
+	}
+
+	if result.Data.Count != len(targetNodes) {
+		t.Fatalf("exchange max-flow batch response has wrong count. expected: %d, got: %d. Records: %+v", len(targetNodes), result.Data.Count, result.Data.Records)
+	}
+
+	if len(result.Data.Records) != len(targetNodes) {
+		// This check is important if the API might return fewer records than addresses requested,
+		// even if Count matches.
+		t.Fatalf("exchange max-flow batch response records count (%d) does not match target nodes count (%d). Records: %+v", len(result.Data.Records), len(targetNodes), result.Data.Records)
+	}
+
+	maxFlowResults := make([]MaxFlowBatchResult, len(result.Data.Records))
+	for i, record := range result.Data.Records {
+		maxFlowResults[i] = MaxFlowBatchResult{
+			ContractorAddress: record.ContractorAddress,
+			MaxAmount:         record.MaxAmount,
+		}
+	}
+
+	return maxFlowResults
+}
+
+func (n *Node) CheckExchangeMaxFlowBatch(t *testing.T, checks []MaxFlowBatchCheck, equivalent string, exchangeEquivalents []string) {
+	if len(checks) == 0 {
+		return
+	}
+
+	targetNodes := make([]*Node, len(checks))
+	for i, check := range checks {
+		targetNodes[i] = check.Node
+	}
+
+	maxFlowResults := n.GetExchangeMaxFlowBatch(t, targetNodes, equivalent, exchangeEquivalents)
+
+	if len(maxFlowResults) != len(checks) {
+		// This might be redundant if GetExchangeMaxFlowBatch already fatals, but good for safety.
+		t.Fatalf("number of max flows received (%d) does not match number of checks (%d)", len(maxFlowResults), len(checks))
+	}
+
+	resultsMap := make(map[string]string)
+	for _, res := range maxFlowResults {
+		resultsMap[res.ContractorAddress] = res.MaxAmount
+	}
+
+	for _, check := range checks {
+		nodeAddress := check.Node.GetIpAndPort()
+		actualMaxAmount, found := resultsMap[nodeAddress]
+		if !found {
+			t.Fatalf("exchange max-flow result not found for contractor address: %s. Available results: %+v", nodeAddress, resultsMap)
+		}
+		if actualMaxAmount != check.ExpectedMaxFlow {
+			t.Fatalf("exchange max-flow for node %s (address %s) is wrong. expected: %s, got: %s",
 				check.Node.Alias, nodeAddress, check.ExpectedMaxFlow, actualMaxAmount)
 		}
 	}
@@ -1596,6 +1747,120 @@ func (n *Node) SetHopsCount(hopsCount int) error {
 		return fmt.Errorf("Node %s: failed to verify config file: %v. Output: %s", n.Alias, err, string(verifyOutput))
 	}
 
+	err = n.RestartNode()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to restart node: %v", n.Alias, err)
+	}
+
+	return nil
+}
+
+// CommissionPair represents a pair of equivalent and commission amount to be set in config
+type CommissionPair struct {
+	Equivalent string
+	Amount     int
+}
+
+// SetCommissions updates commissions configuration in /vtcp/vtcpd/conf.json inside the node's container
+// Accepts an array of pairs (equivalent, amount) and writes them in the following format:
+//
+//	"commissions": {
+//	    "byEquivalent": {
+//	        "1": {"amount": 100},
+//	        "2": {"amount": 250}
+//	    }
+//	}
+//
+// After updating the configuration, the node is restarted (similar to MakeHub and SetHopsCount).
+func (n *Node) SetCommissions(pairs []CommissionPair) error {
+	if n.ContainerID == "" {
+		return fmt.Errorf("Node %s: ContainerID is not set, cannot execute commands", n.Alias)
+	}
+
+	configFilePath := "/vtcp/vtcpd/conf.json"
+
+	// Check if the config file exists
+	checkCmd := []string{"exec", n.ContainerID, "sh", "-c",
+		fmt.Sprintf("[ -f %s ] && echo 'exists' || echo 'not_exists'", configFilePath)}
+	checkCmdExec := exec.Command("docker", checkCmd...)
+	checkOutput, err := checkCmdExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to check config file existence: %v. Output: %s", n.Alias, err, string(checkOutput))
+	}
+
+	var config map[string]interface{}
+
+	if strings.TrimSpace(string(checkOutput)) == "exists" {
+		// Read the existing conf.json file from the container
+		readCmd := []string{"exec", n.ContainerID, "cat", configFilePath}
+		readCmdExec := exec.Command("docker", readCmd...)
+		output, err := readCmdExec.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Node %s: failed to read config file: %v. Output: %s", n.Alias, err, string(output))
+		}
+
+		// Parse the existing JSON
+		if err := json.Unmarshal(output, &config); err != nil {
+			return fmt.Errorf("Node %s: failed to parse existing config JSON: %v", n.Alias, err)
+		}
+	} else {
+		// Create a minimal config structure
+		config = make(map[string]interface{})
+	}
+
+	// Prepare or merge commissions.byEquivalent
+	var commissionsObj map[string]interface{}
+	if v, ok := config["commissions"].(map[string]interface{}); ok {
+		commissionsObj = v
+	} else {
+		commissionsObj = make(map[string]interface{})
+	}
+
+	var byEq map[string]interface{}
+	if v, ok := commissionsObj["byEquivalent"].(map[string]interface{}); ok {
+		byEq = v
+	} else {
+		byEq = make(map[string]interface{})
+	}
+
+	for _, p := range pairs {
+		byEq[p.Equivalent] = map[string]interface{}{
+			"amount": p.Amount,
+		}
+	}
+
+	commissionsObj["byEquivalent"] = byEq
+	config["commissions"] = commissionsObj
+
+	// Convert back to JSON with proper formatting
+	updatedJSON, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to marshal updated config: %v", n.Alias, err)
+	}
+
+	// Ensure directory exists and write the file safely
+	createDirCmd := []string{"exec", n.ContainerID, "mkdir", "-p", "/vtcp/vtcpd"}
+	createDirExec := exec.Command("docker", createDirCmd...)
+	createDirExec.CombinedOutput()
+
+	escapedJSON := strings.ReplaceAll(string(updatedJSON), "'", "'\"'\"'")
+	shellCommand := fmt.Sprintf("printf '%%s' '%s' > %s", escapedJSON, configFilePath)
+	writeCmd := []string{"exec", n.ContainerID, "sh", "-c", shellCommand}
+	writeCmdExec := exec.Command("docker", writeCmd...)
+	writeOutput, err := writeCmdExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to write updated config file: %v. Output: %s", n.Alias, err, string(writeOutput))
+	}
+
+	// Verify the file was written (best-effort)
+	verifyCmd := []string{"exec", n.ContainerID, "cat", configFilePath}
+	verifyCmdExec := exec.Command("docker", verifyCmd...)
+	verifyOutput, err := verifyCmdExec.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Node %s: failed to verify config file: %v. Output: %s", n.Alias, err, string(verifyOutput))
+	}
+
+	// Restart node to apply configuration
 	err = n.RestartNode()
 	if err != nil {
 		return fmt.Errorf("Node %s: failed to restart node: %v", n.Alias, err)

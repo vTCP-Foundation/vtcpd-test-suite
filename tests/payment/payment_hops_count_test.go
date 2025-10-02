@@ -31,7 +31,7 @@ func TestPaymentHopsCount1(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4}, false)
 
 	node1.SetHopsCount(1)
 
@@ -61,7 +61,7 @@ func TestPaymentHopsCount11(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4}, false)
 
 	node1.SetHopsCount(0)
 
@@ -91,7 +91,7 @@ func TestPaymentHopsCount12(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4, node5})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4, node5}, false)
 
 	node1.SetHopsCount(0)
 
@@ -121,7 +121,7 @@ func TestPaymentHopsCount2(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4, node5})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4, node5}, false)
 
 	node1.SetHopsCount(2)
 
@@ -164,7 +164,7 @@ func TestPaymentHopsCount3(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4, node5, node6})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4, node5, node6}, false)
 
 	node1.SetHopsCount(3)
 
@@ -198,7 +198,7 @@ func TestPaymentHopsCount51(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4, node5, node6, node7})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4, node5, node6, node7}, false)
 
 	node1.SetHopsCount(5)
 
@@ -234,7 +234,7 @@ func TestPaymentHopsCount52(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4, node5, node6, node7})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4, node5, node6, node7}, false)
 
 	node1.SetHopsCount(4)
 
@@ -267,7 +267,7 @@ func TestPayment1HopsCountHop11(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2}, false)
 
 	node1.SetHopsCount(2)
 	hop1.MakeHub(testconfig.Equivalent)
@@ -296,7 +296,7 @@ func TestPayment1HopsCountHop12(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2}, false)
 
 	node1.SetHopsCount(1)
 	hop1.MakeHub(testconfig.Equivalent)
@@ -325,7 +325,7 @@ func TestPayment1HopsCountHop13(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2}, false)
 
 	node1.SetHopsCount(0)
 	hop1.MakeHub(testconfig.Equivalent)
@@ -355,7 +355,7 @@ func TestPayment2HopsCountHop21(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3}, false)
 
 	node1.SetHopsCount(3)
 	hop1.MakeHub(testconfig.Equivalent)
@@ -388,7 +388,7 @@ func TestPayment2HopsCountHop22(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3}, false)
 
 	node1.SetHopsCount(2)
 	hop1.MakeHub(testconfig.Equivalent)
@@ -422,7 +422,7 @@ func TestPayment3HopsCountHop31(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3, hop4})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3, hop4}, false)
 
 	node1.SetHopsCount(4)
 	hop1.MakeHub(testconfig.Equivalent)
@@ -459,7 +459,7 @@ func TestPayment3HopsCountHop32(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3, hop4})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3, hop4}, false)
 
 	node1.SetHopsCount(3)
 	hop1.MakeHub(testconfig.Equivalent)
@@ -497,7 +497,7 @@ func TestPayment4HopsCountHop41(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3, hop4, hop5})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3, hop4, hop5}, false)
 
 	node1.SetHopsCount(5)
 	hop1.MakeHub(testconfig.Equivalent)
@@ -538,7 +538,7 @@ func TestPayment4HopsCountHop42(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3, hop4, hop5})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3, hop4, hop5}, false)
 
 	node1.SetHopsCount(4)
 	hop1.MakeHub(testconfig.Equivalent)
@@ -580,7 +580,7 @@ func TestPayment5HopsCountHop(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3, hop4, hop5, hop6})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, hop1, hop2, hop3, hop4, hop5, hop6}, false)
 
 	node1.SetHopsCount(5)
 	hop1.MakeHub(testconfig.Equivalent)
@@ -624,7 +624,7 @@ func TestPayment6HopsCountHop5(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, hop1, hop2, hop3, hop4})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, hop1, hop2, hop3, hop4}, false)
 
 	node1.SetHopsCount(5)
 	hop1.MakeHub(testconfig.Equivalent)

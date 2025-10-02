@@ -33,7 +33,7 @@ func setupNodesForSeveralPaymentsAtTheSameTimeTest(t *testing.T, count int) ([]*
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	return nodes, cluster
 }
 

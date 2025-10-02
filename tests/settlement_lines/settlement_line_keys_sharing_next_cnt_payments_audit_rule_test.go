@@ -33,7 +33,7 @@ func setupNodesForKeysSharingNextCntPaymentsAuditRuleSettlementLineTest(t *testi
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 
 	nodes[0].OpenChannelAndCheck(t, nodes[1])
 	nodes[1].CreateAndSetSettlementLineAndCheck(t, nodes[0], testconfig.Equivalent, "1000")

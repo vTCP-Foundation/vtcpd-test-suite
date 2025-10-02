@@ -63,7 +63,7 @@ func setupNodeForExchangeRatesTest(t *testing.T) (*vtcp.Node, *vtcp.Cluster) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node}, false)
 	return node, cluster
 }
 

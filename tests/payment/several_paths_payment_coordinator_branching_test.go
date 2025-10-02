@@ -32,7 +32,7 @@ func setupNodesForSeveralPathPaymentCoordinatorBranchingTest(t *testing.T) ([]*v
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 
 	nodes[1].OpenChannelAndCheck(t, nodes[0])
 	nodes[5].OpenChannelAndCheck(t, nodes[2])

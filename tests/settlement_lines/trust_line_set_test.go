@@ -20,7 +20,7 @@ func TestTrustLineSet(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	nodeA.OpenChannelAndCheck(t, nodeB)
 

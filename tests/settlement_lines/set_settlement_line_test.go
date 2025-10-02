@@ -34,7 +34,7 @@ func setupNodesForSetSettlementLineTest(t *testing.T, count int) ([]*vtcp.Node, 
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 
 	nodes[0].OpenChannelAndCheck(t, nodes[1])
 	nodes[0].CreateSettlementLine(t, nodes[1], testconfig.Equivalent)
@@ -64,7 +64,7 @@ func TestSettlementLineTooFastSetAndRejectSet(t *testing.T) {
 
 	// Create NodeC
 	nodeC := vtcp.NewNode(t, getNextIPForSetSettlementLineTest(), "nodeC")
-	cluster.RunSingleNode(context.Background(), t, nodeC)
+	cluster.RunSingleNode(context.Background(), t, nodeC, false)
 	defer cluster.StopSingleNode(context.Background(), t, nodeC) // Ensure nodeC is stopped
 
 	nodeA.OpenChannelAndCheck(t, nodeC) // Open channel between A and C
@@ -106,7 +106,7 @@ func TestSettlementLineTooFastSetAndRejectAudit(t *testing.T) {
 
 	// Create NodeC
 	nodeC := vtcp.NewNode(t, getNextIPForSetSettlementLineTest(), "nodeC")
-	cluster.RunSingleNode(context.Background(), t, nodeC)
+	cluster.RunSingleNode(context.Background(), t, nodeC, false)
 	defer cluster.StopSingleNode(context.Background(), t, nodeC)
 
 	nodeA.OpenChannelAndCheck(t, nodeC) // Open channel between A and C

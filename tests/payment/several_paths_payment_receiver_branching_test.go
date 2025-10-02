@@ -32,7 +32,7 @@ func setupNodesForSeveralPathPaymentReceiverBranchingTest(t *testing.T) ([]*vtcp
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 
 	nodes[1].OpenChannelAndCheck(t, nodes[0])
 	nodes[4].OpenChannelAndCheck(t, nodes[3])

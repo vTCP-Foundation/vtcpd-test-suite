@@ -1,4 +1,79 @@
 ###################################################################################
+# Builder for Ubuntu: OpenSSL (>=3.5 dev), liboqs, oqs-provider
+FROM ubuntu:24.04 AS builder-ubuntu-crypto
+ARG DEBIAN_FRONTEND=noninteractive
+ARG OPENSSL_REF=openssl-3.5.0
+ARG LIBOQS_REF=main
+ARG OQS_PROVIDER_REF=main
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential ca-certificates git curl wget perl pkg-config \
+      cmake ninja-build python3 zlib1g-dev && \
+    rm -rf /var/lib/apt/lists/*
+# Build OpenSSL from source (master → 3.5+/3.6.0-dev)
+RUN git clone --depth 1 --branch "$OPENSSL_REF" https://github.com/openssl/openssl.git /tmp/openssl && \
+    cd /tmp/openssl && \
+    env LDFLAGS='-Wl,-rpath,/usr/local/lib:/usr/local/lib64' ./Configure --prefix=/usr/local --openssldir=/usr/local/ssl shared && \
+    make -j"$(nproc)" && make install_sw && \
+    rm -rf /tmp/openssl
+# Build liboqs
+RUN git clone --depth 1 --branch "$LIBOQS_REF" https://github.com/open-quantum-safe/liboqs.git /tmp/liboqs && \
+    cmake -S /tmp/liboqs -B /tmp/liboqs/build -GNinja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DOQS_BUILD_ONLY_LIB=ON \
+      -DBUILD_SHARED_LIBS=ON \
+      -DOQS_DIST_BUILD=ON && \
+    ninja -C /tmp/liboqs/build && ninja -C /tmp/liboqs/build install && \
+    rm -rf /tmp/liboqs
+# Build oqs-provider (installs into /usr/local/lib{,64}/ossl-modules)
+RUN git clone --depth 1 --branch "$OQS_PROVIDER_REF" https://github.com/open-quantum-safe/oqs-provider.git /tmp/oqs-provider && \
+    cmake -S /tmp/oqs-provider -B /tmp/oqs-provider/build -GNinja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DOPENSSL_ROOT_DIR=/usr/local \
+      -DLIBOQS_INSTALL_DIR=/usr/local && \
+    ninja -C /tmp/oqs-provider/build && ninja -C /tmp/oqs-provider/build install && \
+    rm -rf /tmp/oqs-provider
+
+###################################################################################
+# Builder for Manjaro: OpenSSL (>=3.5 dev), liboqs, oqs-provider
+FROM manjarolinux/base AS builder-manjaro-crypto
+ARG OPENSSL_REF=openssl-3.5.0
+ARG LIBOQS_REF=main
+ARG OQS_PROVIDER_REF=main
+RUN pacman -Syu --noconfirm && \
+    pacman -S --noconfirm \
+      base-devel git cmake ninja perl python \
+      zlib && \
+    true
+# Build OpenSSL from source (master → 3.5+/3.6.0-dev)
+RUN git clone --depth 1 --branch "$OPENSSL_REF" https://github.com/openssl/openssl.git /tmp/openssl && \
+    cd /tmp/openssl && \
+    env LDFLAGS='-Wl,-rpath,/usr/local/lib:/usr/local/lib64' ./Configure --prefix=/usr/local --openssldir=/usr/local/ssl shared && \
+    make -j"$(nproc)" && make install_sw && \
+    rm -rf /tmp/openssl
+# Build liboqs
+RUN git clone --depth 1 --branch "$LIBOQS_REF" https://github.com/open-quantum-safe/liboqs.git /tmp/liboqs && \
+    cmake -S /tmp/liboqs -B /tmp/liboqs/build -GNinja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DOQS_BUILD_ONLY_LIB=ON \
+      -DBUILD_SHARED_LIBS=ON \
+      -DOQS_DIST_BUILD=ON && \
+    ninja -C /tmp/liboqs/build && ninja -C /tmp/liboqs/build install && \
+    rm -rf /tmp/liboqs
+# Build oqs-provider
+RUN git clone --depth 1 --branch "$OQS_PROVIDER_REF" https://github.com/open-quantum-safe/oqs-provider.git /tmp/oqs-provider && \
+    cmake -S /tmp/oqs-provider -B /tmp/oqs-provider/build -GNinja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DOPENSSL_ROOT_DIR=/usr/local \
+      -DLIBOQS_INSTALL_DIR=/usr/local && \
+    ninja -C /tmp/oqs-provider/build && ninja -C /tmp/oqs-provider/build install && \
+    rm -rf /tmp/oqs-provider
+
+###################################################################################
 # Manjaro Linux runtime environment
 FROM manjarolinux/base AS runtime-manjaro
 RUN pacman -Syu --noconfirm && \
@@ -20,6 +95,38 @@ RUN pacman -Syu --noconfirm && \
     ls -la /usr/lib/libsodium* && \
     echo "Library dependencies:" && \
     ldd /vtcpd/vtcpd || true
+
+# Install custom-built OpenSSL + oqs-provider from builder and auto-load providers
+COPY --from=builder-manjaro-crypto /usr/local /usr/local
+ENV OPENSSL_MODULES=/usr/local/lib64/ossl-modules
+ENV OPENSSL_CONF=/usr/local/ssl/openssl.cnf
+ENV LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib
+RUN set -eux; \
+    echo '/usr/local/lib' > /etc/ld.so.conf.d/00-openssl_local.conf; \
+    echo '/usr/local/lib64' >> /etc/ld.so.conf.d/00-openssl_local.conf; \
+    ldconfig; \
+    if [ ! -d /usr/local/lib64/ossl-modules ] && [ -d /usr/local/lib/ossl-modules ]; then \
+      mkdir -p /usr/local/lib64 && ln -s /usr/local/lib/ossl-modules /usr/local/lib64/ossl-modules; \
+    fi; \
+    mkdir -p /usr/local/ssl && cat > /usr/local/ssl/openssl.cnf <<'EOF' 
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+
+[provider_sect]
+default = default_sect
+oqsprovider = oqs_sect
+
+[default_sect]
+activate = 1
+
+[oqs_sect]
+module = oqsprovider
+activate = 1
+EOF
+RUN /usr/local/bin/openssl version && \
+    /usr/local/bin/openssl list -signature-algorithms -provider oqsprovider -provider-path "$OPENSSL_MODULES" -provider default | grep -Ei 'slh-.*dsa|sphincs'
 
 # Create a non-root user for running the daemon
 RUN useradd -r -s /usr/bin/nologin vtcpd && \
@@ -72,13 +179,46 @@ RUN apt-get update && \
     unzip \
     rsync \
     vim \
-    sqlite3 && \
+    sqlite3 \
+    valgrind && \
     ln -s /usr/lib/postgresql/*/bin/pg_ctl /usr/local/bin/pg_ctl && \
     ln -s /usr/lib/postgresql/*/bin/initdb /usr/local/bin/initdb && \
     rm -rf /var/lib/apt/lists/* && \
     useradd -r -s /usr/sbin/nologin vtcpd && \
     # Create postgres user for database operations
     useradd -r -s /bin/bash postgres || true
+
+# Install custom-built OpenSSL + oqs-provider from builder and auto-load providers
+COPY --from=builder-ubuntu-crypto /usr/local /usr/local
+ENV OPENSSL_MODULES=/usr/local/lib64/ossl-modules
+ENV OPENSSL_CONF=/usr/local/ssl/openssl.cnf
+ENV LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib
+RUN set -eux; \
+    echo '/usr/local/lib' > /etc/ld.so.conf.d/00-openssl_local.conf; \
+    echo '/usr/local/lib64' >> /etc/ld.so.conf.d/00-openssl_local.conf; \
+    ldconfig; \
+    if [ ! -d /usr/local/lib64/ossl-modules ] && [ -d /usr/local/lib/ossl-modules ]; then \
+      mkdir -p /usr/local/lib64 && ln -s /usr/local/lib/ossl-modules /usr/local/lib64/ossl-modules; \
+    fi; \
+    mkdir -p /usr/local/ssl && cat > /usr/local/ssl/openssl.cnf <<'EOF' 
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+
+[provider_sect]
+default = default_sect
+oqsprovider = oqs_sect
+
+[default_sect]
+activate = 1
+
+[oqs_sect]
+module = oqsprovider
+activate = 1
+EOF
+RUN /usr/local/bin/openssl version && \
+    /usr/local/bin/openssl list -signature-algorithms -provider oqsprovider -provider-path "$OPENSSL_MODULES" -provider default | grep -Ei 'slh-.*dsa|sphincs'
 
 # --- OR-Tools (prebuilt C++ archive for Ubuntu) ---
 ARG ORTOOLS_VER=v9.14
@@ -295,7 +435,9 @@ RUN mkdir -p vtcpd
 COPY ./deps/vtcpd/vtcpd /vtcp/vtcpd/
 COPY ./deps/cli/cli /vtcp/cli
 COPY ./start-postgres.sh /usr/local/bin/start-postgres.sh
-RUN chmod +x /usr/local/bin/start-postgres.sh
+COPY ./vtcpd-valgrind-wrapper.sh /usr/local/bin/vtcpd-valgrind-wrapper.sh
+RUN chmod +x /usr/local/bin/start-postgres.sh && \
+    chmod +x /usr/local/bin/vtcpd-valgrind-wrapper.sh
 
 # Create run directory for PostgreSQL socket
 RUN mkdir -p /var/run/postgresql && \
@@ -311,6 +453,8 @@ ARG CLI_LISTEN_ADDRESS=127.0.0.1
 ARG CLI_LISTEN_PORT=3000
 ARG CLI_LISTEN_PORT_TESTING=3001
 ARG VTCPD_DATABASE_CONFIG=sqlite3:///io
+ARG VALGRIND_ENABLED=false
+ARG VALGRIND_OPTS=--leak-check=full --track-origins=yes --log-file=/vtcp/valgrind.log
 
 ENV VTCPD_LISTEN_ADDRESS=${VTCPD_LISTEN_ADDRESS}
 ENV VTCPD_LISTEN_PORT=${VTCPD_LISTEN_PORT}
@@ -320,6 +464,8 @@ ENV CLI_LISTEN_ADDRESS=${CLI_LISTEN_ADDRESS}
 ENV CLI_LISTEN_PORT=${CLI_LISTEN_PORT}
 ENV CLI_LISTEN_PORT_TESTING=${CLI_LISTEN_PORT_TESTING}
 ENV VTCPD_DATABASE_CONFIG=${VTCPD_DATABASE_CONFIG}
+ENV VALGRIND_ENABLED=${VALGRIND_ENABLED}
+ENV VALGRIND_OPTS=${VALGRIND_OPTS}
 
 # Create startup script that uses runtime environment variables
 RUN echo '#!/bin/bash\n\
@@ -341,7 +487,7 @@ EOF\n\
 # Create cli config file
     cat <<EOF > /vtcp/conf.yaml\n\
 workdir: "/vtcp/vtcpd/"\n\
-vtcpd_path: "/vtcp/vtcpd/vtcpd"\n\
+vtcpd_path: "/usr/local/bin/vtcpd-valgrind-wrapper.sh"\n\
 http:\n\
   host: "${CLI_LISTEN_ADDRESS}"\n\
   port: ${CLI_LISTEN_PORT}\n\

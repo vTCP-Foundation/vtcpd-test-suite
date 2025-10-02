@@ -47,7 +47,7 @@ func Test1DirectPayment7NormalAmount(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	node1.CreateTransactionCheckStatus(t, node7, testconfig.Equivalent, "1000", vtcp.StatusOK)
@@ -64,7 +64,7 @@ func Test2DirectPayment7NodesAmountTooBig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	node1.CreateTransactionCheckStatus(t, node7, testconfig.Equivalent, "1500", vtcp.StatusInsufficientFunds)
@@ -81,7 +81,7 @@ func Test4aLostAskNeighborToReserveAmountMsgFromCoordinatorToFirstIntermediateNo
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_request_to_intermediate_node_on_reservation (Corresponds to flag 1 in two_nodes tests)
@@ -102,7 +102,7 @@ func Test4bLostAskNeighborToApproveFurtherNodeReservationMsgFromCoordinatorToFir
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_message_to_coordinator_on_reservation (New flag)
@@ -123,7 +123,7 @@ func Test4cLostAskRemoteNodeToApproveReservationMsgFromCoordinatorToLastIntermed
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_message_to_coordinator_on_reservation (New flag)
@@ -144,7 +144,7 @@ func Test4dLostProcessNeighborAmountReservationResponseMsgFromFirstIntermediateN
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_response_to_intermediate_node_on_reservation (Corresponds to flag 2)
@@ -165,7 +165,7 @@ func Test4eLostMsgFromFirstIntermediateNodeToNextIntermediateNode(t *testing.T) 
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_request_to_intermediate_node_on_reservation (Corresponds to flag 1)
@@ -186,7 +186,7 @@ func Test4fLostMsgFromNextIntermediateNodeToPrevious(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_response_to_intermediate_node_on_reservation (Corresponds to flag 2)
@@ -207,7 +207,7 @@ func Test4gLostMsgFromLastIntermediateNodeReceiver(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_request_to_intermediate_node_on_reservation (Corresponds to flag 1)
@@ -228,7 +228,7 @@ func Test4hLostMsgReceiverToPrevious(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_response_to_intermediate_node_on_reservation (Corresponds to flag 2)
@@ -249,7 +249,7 @@ func Test4jLostProcessNeighborFurtherReservationResponseMsgFromFirstIntermediate
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_message_to_coordinator_on_reservation (New flag)
@@ -270,7 +270,7 @@ func Test4kLostProcessRemoteNodeResponseMsgFromLastIntermediateNodeToCoordinator
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_message_to_coordinator_on_reservation (New flag)
@@ -291,7 +291,7 @@ func Test5LostMessageWithPathFinalConfiguration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_message_with_final_path_configuration (New flag)
@@ -312,7 +312,7 @@ func Test6aLostMessageWithFinalConfigurationToIntermediateNode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_message_on_final_amount_clarification (New flag)
@@ -333,7 +333,7 @@ func Test6bLostMessageWithFinalConfigurationToCoordinator(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_message_on_final_amount_clarification (New flag)
@@ -354,7 +354,7 @@ func Test7aLostMsgWithPublicKeysToFirstIntermediateNode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	err = node1.SetTestingFlag(vtcp.FlagForbidSendMessageVoteStage, "", "")
@@ -438,7 +438,7 @@ func Test7bLostMsgWithSignatureToCoordinator(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	if err := node2.SetTestingFlag(vtcp.FlagForbidSendMessageVoteConsistency, "", ""); err != nil {
@@ -532,7 +532,7 @@ func Test7cLostMsgWithPublicKeyHashFromIntermediateNodeToParticipants(t *testing
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_message_on_vote_stage (Corresponds to flag 3)
@@ -556,7 +556,7 @@ func Test7dLostMsgWithSignatureFromCoordinatorToAllIntermediateNodes(t *testing.
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_forbid_send_message_on_vote_consistency (Corresponds to flag 4)
@@ -608,7 +608,7 @@ func Test7eLostMsgWithSignatureFromCoordinatorToAllIntermediateNodesAlsoOnRecove
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// flag_forbid_send_message_on_recovery_stage = 103 (New)
@@ -695,7 +695,7 @@ func Test8aCrashCoordinatorAfterSendingMessageOnVoting(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_throw_exception_on_vote (Corresponds to flag 6)
@@ -787,7 +787,7 @@ func Test8bCrashCoordinatorAfterReceivingMessageWithSignature(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_throw_exception_on_vote_consistency (Corresponds to flag 7)
@@ -879,7 +879,7 @@ func Test9aCrashIntermediateNodeRunPreviousNeighborRequestProcessingStage(t *tes
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_throw_exception_on_previous_neighbor_request (Corresponds to flag 5)
@@ -899,7 +899,7 @@ func Test9bCrashIntermediateNodeRunCoordinatorRequestProcessingStage(t *testing.
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_throw_exception_on_coordinator_request_processing (New flag)
@@ -920,7 +920,7 @@ func Test9cCrashIntermediateNodeRunNextNeighborResponseProcessingStage(t *testin
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_throw_exception_on_next_neighbor_response_processing (New flag)
@@ -941,7 +941,7 @@ func Test9dCrashIntermediateNodeAfterSignBeforeSendResponse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_throw_exception_on_vote (Corresponds to flag 6)
@@ -1037,7 +1037,7 @@ func Test9eStopProcessIntermediateNodeAfterVotesReceivingBeforeCommitting(t *tes
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_terminate_process_on_vote_consistency (Corresponds to flag 11)
@@ -1092,7 +1092,7 @@ func Test10aStopProcessCoordinatorAfterSendingMessageOnVoting(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_terminate_process_on_vote (Corresponds to flag 10)
@@ -1146,7 +1146,7 @@ func Test10bStopProcessCoordinatorAfterReceivingMessageWithSignatures(t *testing
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_terminate_process_on_vote_consistency (Corresponds to flag 11)
@@ -1237,7 +1237,7 @@ func Test11aStopProcessIntermediateNodeRunPreviousNeighborRequestProcessingStage
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_terminate_process_on_previous_neighbor_request (Corresponds to flag 9)
@@ -1258,7 +1258,7 @@ func Test11bStopProcessIntermediateNodeRunCoordinatorRequestProcessingStage(t *t
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_terminate_process_on_coordinator_request_processing (New flag)
@@ -1280,7 +1280,7 @@ func Test11cStopProcessIntermediateNodeRunNextNeighborResponseProcessingStage(t 
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_terminate_process_on_next_neighbor_response_processing (New flag)
@@ -1302,7 +1302,7 @@ func Test11dStopProcessIntermediateNodeAfterSignBeforeSending(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_terminate_process_on_vote (Corresponds to flag 10)
@@ -1399,7 +1399,7 @@ func Test11eStopProcessIntermediateNodeAfterVotesReceivingBeforeCommitting(t *te
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	createChannelsAndSettlementLinesSevenNodes(t, node1, node2, node3, node4, node5, node6, node7)
 
 	// self.flag_terminate_process_on_vote_consistency (Corresponds to flag 11)

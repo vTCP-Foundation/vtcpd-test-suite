@@ -33,7 +33,7 @@ func setupNodesForSettlementLineKeysSharingBadInternetTest(t *testing.T, count i
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 	nodes[0].OpenChannelAndCheck(t, nodes[1])
 	nodes[0].CreateAndSetSettlementLineAndCheck(t, nodes[1], testconfig.Equivalent, "1000")
 

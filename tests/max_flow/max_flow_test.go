@@ -23,7 +23,7 @@ func TestMaxFlowThrough6Hops(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4, node5, node6, node7})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{node1, node2, node3, node4, node5, node6, node7}, false)
 
 	node1.OpenChannelAndCheck(t, node2)
 	node3.OpenChannelAndCheck(t, node4)

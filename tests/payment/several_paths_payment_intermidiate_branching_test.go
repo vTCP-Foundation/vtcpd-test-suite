@@ -32,7 +32,7 @@ func setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t *testing.T) ([]*
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, nodes)
+	cluster.RunNodes(ctx, t, nodes, false)
 
 	// Setup topology according to Python version
 	nodes[1].OpenChannelAndCheck(t, nodes[0])

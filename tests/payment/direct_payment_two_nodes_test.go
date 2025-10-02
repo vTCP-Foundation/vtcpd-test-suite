@@ -31,7 +31,7 @@ func Test1DirectPaymentNormalAmount(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB, nodeC, nodeD})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB, nodeC, nodeD}, false)
 
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
 	nodeA.CheckMaxFlowBatch(t,
@@ -90,7 +90,7 @@ func Test2DirectPaymentOvertrustAmount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB, nodeC, nodeD})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB, nodeC, nodeD}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -144,7 +144,7 @@ func Test3aPaymentWithoutPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB, nodeD})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB, nodeD}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -168,7 +168,7 @@ func Test3bDirectPaymentWithTrustlineWithoutFlow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB, nodeD})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB, nodeD}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -191,7 +191,7 @@ func Test4aLostMessageOnReservationStageToReceiver(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -220,7 +220,7 @@ func Test4bLostMessageOnReservationStageToCoordinator(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -249,7 +249,7 @@ func Test5aLostMessageWithPublicKeysToReceiver(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -287,7 +287,7 @@ func Test5bLostMessageWithSignatureToCoordinator(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -341,7 +341,7 @@ func Test5cLostMessageWithSignatureToReceiver(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -382,7 +382,7 @@ func Test6aReceiverCrashReservationStage(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -412,7 +412,7 @@ func Test6bReceiverCrashAfterSignBeforeSending(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -466,7 +466,7 @@ func Test6cReceiverCrashAfterVotesReceivingBeforeCommitting(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -506,7 +506,7 @@ func Test7aCoordinatorCrashReservationStage(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -535,7 +535,7 @@ func Test7bCoordinatorCrashAfterSendingMessageOnVoting(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -589,7 +589,7 @@ func Test7cCoordinatorCrashAfterReceivingMessageWithSignature(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -643,7 +643,7 @@ func Test7dCoordinatorCrashAfterApprovingBeforeSendingMessageWithSignature(t *te
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -683,7 +683,7 @@ func Test8aReceiverProcessCrashReservationStage(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -712,7 +712,7 @@ func Test8bReceiverProcessCrashAfterSignBeforeSending(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -741,7 +741,7 @@ func Test8cReceiverProcessCrashAfterVotesReceivingBeforeCommitting(t *testing.T)
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -795,7 +795,7 @@ func Test9aCoordinatorProcessCrashReservationStage(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -824,7 +824,7 @@ func Test9bCoordinatorProcessCrashAfterSendingMessageOnVoting(t *testing.T) {
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -864,7 +864,7 @@ func Test9cCoordinatorProcessCrashAfterReceivingMessageWithSignature(t *testing.
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
@@ -918,7 +918,7 @@ func Test9dCoordinatorProcessCrashAfterApprovingBeforeSendingMessageWithSignatur
 		t.Fatalf("failed to create cluster: %v", err)
 	}
 
-	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB})
+	cluster.RunNodes(ctx, t, []*vtcp.Node{nodeA, nodeB}, false)
 
 	// Common setup based on Python's prepare_topology
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")

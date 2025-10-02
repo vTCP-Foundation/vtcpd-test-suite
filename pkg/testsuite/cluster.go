@@ -57,11 +57,20 @@ func NewCluster(ctx context.Context, t *testing.T, settings *ClusterSettings) (*
 	return cluster, nil
 }
 
-func (c *Cluster) RunNode(ctx context.Context, t *testing.T, wg *sync.WaitGroup, node *Node) (err error) {
+func (c *Cluster) RunNode(ctx context.Context, t *testing.T, wg *sync.WaitGroup, node *Node, valgrind bool) (err error) {
 	// Get VTCPD_DATABASE_CONFIG from environment and add it to node.Env if it exists
 	envVars := node.Env
 	if dbConfig := os.Getenv("VTCPD_DATABASE_CONFIG"); dbConfig != "" {
 		envVars = append(envVars, fmt.Sprintf("VTCPD_DATABASE_CONFIG=%s", dbConfig))
+	}
+
+	// Add valgrind environment variable based on parameter
+	if valgrind {
+		envVars = append(envVars, "VALGRIND_ENABLED=true")
+		// Explicitly set VALGRIND_OPTS to ensure proper logging
+		envVars = append(envVars, "VALGRIND_OPTS=--leak-check=full --track-origins=yes --log-file=/vtcp/valgrind.log")
+	} else {
+		envVars = append(envVars, "VALGRIND_ENABLED=false")
 	}
 
 	// Create container
@@ -131,11 +140,11 @@ func (c *Cluster) RunNode(ctx context.Context, t *testing.T, wg *sync.WaitGroup,
 	return nil
 }
 
-func (c *Cluster) RunNodes(ctx context.Context, t *testing.T, nodes []*Node) {
+func (c *Cluster) RunNodes(ctx context.Context, t *testing.T, nodes []*Node, valgrind bool) {
 	wg := sync.WaitGroup{}
 	{
 		for _, node := range nodes {
-			err := c.RunNode(ctx, t, &wg, node)
+			err := c.RunNode(ctx, t, &wg, node, valgrind)
 			if err != nil {
 				t.Fatalf("failed to run %s: %v", node.Alias, err)
 			}
@@ -158,10 +167,10 @@ func (c *Cluster) RunNodes(ctx context.Context, t *testing.T, nodes []*Node) {
 	}
 }
 
-func (c *Cluster) RunSingleNode(ctx context.Context, t *testing.T, node *Node) {
+func (c *Cluster) RunSingleNode(ctx context.Context, t *testing.T, node *Node, valgrind bool) {
 	// No need for goroutine when running a single node
 	var wg sync.WaitGroup // Dummy WaitGroup as RunNode expects one
-	err := c.RunNode(ctx, t, &wg, node)
+	err := c.RunNode(ctx, t, &wg, node, valgrind)
 	if err != nil {
 		t.Fatalf("failed to run %s: %v", node.Alias, err)
 	}
