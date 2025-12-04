@@ -29,14 +29,15 @@ const (
 	SettlementLineKeysPresent = "1"
 	SettlementLineKeysAbsent  = "0"
 
-	StatusOK                 = 200
-	StatusProtocolError      = 401
-	StatusAlreadyExists      = 402
-	StatusNoConsensusError   = 409
-	StatusInsufficientFunds  = 412
-	StatusNoPaymentRoutes    = 462
-	StatusUnexpectedError    = 501
-	StatusServiceUnavailable = 503
+	StatusOK                         = 200
+	StatusProtocolError              = 401
+	StatusAlreadyExists              = 402
+	StatusNoConsensusError           = 409
+	StatusInsufficientFunds          = 412
+	StatusMoreThanMaxAllowableAmount = 415
+	StatusNoPaymentRoutes            = 462
+	StatusUnexpectedError            = 501
+	StatusServiceUnavailable         = 503
 
 	PaymentObservingStateNoInfo   = "0"
 	PaymentObservingStateClaimed  = "1"
@@ -87,6 +88,8 @@ const (
 	// Log Messages
 	LogMessageRecoveringLogMessage = "runVotesRecoveryParentStage"
 	DefaultOperationsLogPath       = "/vtcp/vtcpd/operations.log"
+
+	NoMaxAllowablePaymentAmount = ""
 )
 
 // Testing flags based on Python test suite debug flags
@@ -216,7 +219,7 @@ func NewNode(t *testing.T, ipAddress string, alias string) *Node {
 			fmt.Sprintf("VTCPD_LISTEN_ADDRESS=%s", ipAddress),
 			fmt.Sprintf("VTCPD_LISTEN_PORT=%d", DefaultNodePort),
 			"VTCPD_EQUIVALENTS_REGISTRY=eth",
-			"VTCPD_MAX_HOPS=5",
+			"VTCPD_MAX_HOPS=6",
 			"CLI_LISTEN_ADDRESS=0.0.0.0",
 			fmt.Sprintf("CLI_LISTEN_PORT=%d", DefaultCLIPort),
 			fmt.Sprintf("CLI_LISTEN_PORT_TESTING=%d", DefaultCLIPortTest),
@@ -546,7 +549,7 @@ func (n *Node) CheckActiveSettlementLine(t *testing.T, targetNode *Node, equival
 func (n *Node) CreateAndSetSettlementLineAndCheck(t *testing.T, targetNode *Node, equivalent string, amount string) {
 	n.CreateAndSetSettlementLine(t, targetNode, equivalent, amount)
 
-	time.Sleep(1500 * time.Millisecond)
+	time.Sleep(2000 * time.Millisecond)
 
 	n.CheckActiveSettlementLine(t, targetNode, equivalent, amount, "0", "0")
 	targetNode.CheckActiveSettlementLine(t, n, equivalent, "0", amount, "0")
@@ -741,6 +744,44 @@ func (n *Node) CreateTransactionCheckStatus(t *testing.T, targetNode *Node, equi
 	}
 
 	t.Logf("transaction_uuid: %s", result.Data.TransactionUUID)
+
+	return result.Data.TransactionUUID, nil
+}
+
+// CreateExchangeTransactionCheckStatus initiates an exchange transaction to the target node.
+// It creates a payment that delivers funds in the receiver equivalent while debiting the payer exchange equivalent.
+func (n *Node) CreateExchangeTransactionCheckStatus(t *testing.T, targetNode *Node, receiverEquivalent string, amount string, payerEquivalent string, maxAllowablePaymentAmount string, expectedStatus int) (string, error) {
+	url := fmt.Sprintf("http://%s:%d/api/v1/node/contractors/transactions/exchange/%s/?contractor_address=%s&amount=%s&exchange_equivalent=%s",
+		n.IPAddress, n.CLIPort, receiverEquivalent, targetNode.GetIPAddressForRequests(), amount, payerEquivalent)
+
+	// Add optional max_allowable_payment_amount parameter if provided
+	if maxAllowablePaymentAmount != "" {
+		url += fmt.Sprintf("&max_allowable_payment_amount=%s", maxAllowablePaymentAmount)
+	}
+
+	// No request body needed, parameters are in the URL query
+	resp, err := http.Post(url, "application/json", nil) // Body is nil
+	if err != nil {
+		t.Fatalf("failed to send create exchange transaction request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != expectedStatus {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("create exchange transaction request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// Decode response to get transaction_uuid if needed
+	var result struct {
+		Data struct {
+			TransactionUUID string `json:"transaction_uuid"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode create exchange transaction response: %v", err)
+	}
+
+	t.Logf("exchange transaction_uuid: %s", result.Data.TransactionUUID)
 
 	return result.Data.TransactionUUID, nil
 }
@@ -2538,5 +2579,123 @@ func (n *Node) ClearExchangeRates(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		t.Fatalf("clear-exchange-rates request failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+}
+
+// CheckEstimatePaymentForReceiveAmount calls the payment estimation API (receive -> payment)
+// and verifies both the HTTP status and the returned estimated payment amount.
+// - targetNode: Contractor to whom the payment is planned
+// - receiveAmount: Desired amount to be received in receiver equivalent
+// - senderEquivalent: Equivalent in which the payer spends
+// - receiverEquivalent: Equivalent in which the contractor receives
+// - expectedEstimatedPayment: Expected estimated payment amount (string)
+// - expectedStatusCode: Expected HTTP status code
+func (n *Node) CheckEstimatePaymentForReceiveAmount(
+	t *testing.T,
+	targetNode *Node,
+	receiveAmount string,
+	senderEquivalent string,
+	receiverEquivalent string,
+	expectedEstimatedPayment string,
+	expectedStatusCode int,
+) {
+	url := fmt.Sprintf(
+		"http://%s:%d/api/v1/node/contractors/transactions/estimate/payment/%s/%s/?contractor_address=%s&receive_amount=%s",
+		n.IPAddress,
+		n.CLIPort,
+		senderEquivalent,
+		receiverEquivalent,
+		targetNode.GetIPAddressForRequests(),
+		receiveAmount,
+	)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatalf("failed to send estimate payment request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != expectedStatusCode {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("estimate payment request returned unexpected status: expected %d, got %d, body: %s",
+			expectedStatusCode, resp.StatusCode, string(bodyBytes))
+	}
+
+	// If a non-200 status was expected, do not decode body
+	if expectedStatusCode != http.StatusOK {
+		return
+	}
+
+	var result struct {
+		Data struct {
+			EstimatedPaymentAmount string `json:"estimated_payment_amount"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode estimate payment response: %v", err)
+	}
+
+	if result.Data.EstimatedPaymentAmount != expectedEstimatedPayment {
+		t.Fatalf("estimated payment amount mismatch: expected %s, got %s",
+			expectedEstimatedPayment, result.Data.EstimatedPaymentAmount)
+	}
+}
+
+// CheckEstimateReceiveForPaymentAmount calls the receive estimation API (payment -> receive)
+// and verifies both the HTTP status and the returned estimated receive amount.
+// - targetNode: Contractor to whom the payment is planned
+// - paymentAmount: Amount to be paid in sender equivalent
+// - senderEquivalent: Equivalent in which the payer spends
+// - receiverEquivalent: Equivalent in which the contractor receives
+// - expectedEstimatedReceive: Expected estimated receive amount (string)
+// - expectedStatusCode: Expected HTTP status code
+func (n *Node) CheckEstimateReceiveForPaymentAmount(
+	t *testing.T,
+	targetNode *Node,
+	paymentAmount string,
+	senderEquivalent string,
+	receiverEquivalent string,
+	expectedEstimatedReceive string,
+	expectedStatusCode int,
+) {
+	url := fmt.Sprintf(
+		"http://%s:%d/api/v1/node/contractors/transactions/estimate/receive/%s/%s/?contractor_address=%s&payment_amount=%s",
+		n.IPAddress,
+		n.CLIPort,
+		senderEquivalent,
+		receiverEquivalent,
+		targetNode.GetIPAddressForRequests(),
+		paymentAmount,
+	)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatalf("failed to send estimate receive request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != expectedStatusCode {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Fatalf("estimate receive request returned unexpected status: expected %d, got %d, body: %s",
+			expectedStatusCode, resp.StatusCode, string(bodyBytes))
+	}
+
+	// If a non-200 status was expected, do not decode body
+	if expectedStatusCode != http.StatusOK {
+		return
+	}
+
+	var result struct {
+		Data struct {
+			EstimatedReceiveAmount string `json:"estimated_receive_amount"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode estimate receive response: %v", err)
+	}
+
+	if result.Data.EstimatedReceiveAmount != expectedEstimatedReceive {
+		t.Fatalf("estimated receive amount mismatch: expected %s, got %s",
+			expectedEstimatedReceive, result.Data.EstimatedReceiveAmount)
 	}
 }
