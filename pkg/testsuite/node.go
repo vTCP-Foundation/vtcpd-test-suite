@@ -39,9 +39,10 @@ const (
 	StatusUnexpectedError            = 501
 	StatusServiceUnavailable         = 503
 
-	PaymentObservingStateNoInfo   = "0"
-	PaymentObservingStateClaimed  = "1"
-	PaymentObservingStateRejected = "5"
+	PaymentObservingStateNoInfo    = "0"
+	PaymentObservingStateCommitted = "1"
+	PaymentObservingStateClaimed   = "1"
+	PaymentObservingStateRejected  = "5"
 
 	WaitingAuditResponseSec     = 20
 	WaitingParticipantsVotesSec = 15
@@ -95,30 +96,33 @@ const (
 // Testing flags based on Python test suite debug flags
 const (
 	// From test_transaction_direct_payment_two_nodes.py and their Go equivalents
-	FlagForbidSendInitMessage                        uint64 = 4           // Python: flag_forbid_send_init_message
-	FlagForbidSendMessageToCoordinatorReservation    uint64 = 8           // Python: flag_forbid_send_message_to_coordinator_on_reservation
-	FlagForbidSendRequestToIntermediateReservation   uint64 = 16          // Python: flag_forbid_send_request_to_intermediate_node_on_reservation
-	FlagForbidSendResponseToIntemediateOnReservation uint64 = 32          // Python: flag_forbid_send_response_to_intermediate_node_on_reservation
-	FlagForbidSendMessageFinalPathConfig             uint64 = 64          // Python: flag_forbid_send_message_with_final_path_configuration
-	FlagForbidSendMessageFinalAmountClarification    uint64 = 128         // Python: flag_forbid_send_message_on_final_amount_clarification
-	FlagForbidSendMessageVoteStage                   uint64 = 256         // Python: flag_forbid_send_message_on_vote_stage
-	FlagForbidSendMessageVoteConsistency             uint64 = 512         // Python: flag_forbid_send_message_on_vote_consistency
-	FlagForbidSendMessageRecoveryStage               uint64 = 1024        // Python: flag_forbid_send_message_on_recovery_stage
-	FlagThrowExceptionPreviousNeighborRequest        uint64 = 2048        // Python: flag_throw_exception_on_previous_neighbor_request
-	FlagThrowExceptionCoordinatorRequest             uint64 = 4096        // Python: flag_throw_exception_on_coordinator_request_processing
-	FlagThrowExceptionNextNeighborResponse           uint64 = 8192        // Python: flag_throw_exception_on_next_neighbor_response_processing
-	FlagThrowExceptionVote                           uint64 = 16384       // Python: flag_throw_exception_on_vote
-	FlagThrowExceptionVoteConsistency                uint64 = 32768       // Python: flag_throw_exception_on_vote_consistency
-	FlagThrowExceptionCoordinatorAfterApprove        uint64 = 65536       // Python: flag_throw_exception_on_coordinator_after_approve_before_send_message
-	FlagTerminateProcessPreviousNeighborRequest      uint64 = 2097152     // Python: flag_terminate_process_on_previous_neighbor_request
-	FlagTerminateProcessCoordinatorRequest           uint64 = 4194304     // Python: flag_terminate_process_on_coordinator_request_processing
-	FlagTerminateProcessNextNeighborResponse         uint64 = 8388608     // Python: flag_terminate_process_on_next_neighbor_response_processing
-	FlagTerminateProcessVote                         uint64 = 16777216    // Python: flag_terminate_process_on_vote
-	FlagTerminateProcessVoteConsistency              uint64 = 33554432    // Python: flag_terminate_process_on_vote_consistency
-	FlagTerminateProcessCoordinatorAfterApprove      uint64 = 67108864    // Python: flag_terminate_process_on_coordinator_after_approve_before_send_message
-	FlagSleepOnNextNeighborResponseProcessing        uint64 = 8589934592  // Python: flag_sleep_on_next_neighbor_response_processing
-	FlagSleepOnFinalAmountClarification              uint64 = 17179869184 // Python: flag_sleep_on_final_amount_clarification
-	FlagSleepOnVoteConsistencyStage                  uint64 = 68719476736 // Python: flag_sleep_on_vote_consistency_stage
+	FlagForbidSendInitMessage                          uint64 = 4           // Python: flag_forbid_send_init_message
+	FlagForbidSendMessageToCoordinatorReservation      uint64 = 8           // Python: flag_forbid_send_message_to_coordinator_on_reservation
+	FlagForbidSendRequestToIntermediateReservation     uint64 = 16          // Python: flag_forbid_send_request_to_intermediate_node_on_reservation
+	FlagForbidSendResponseToIntemediateOnReservation   uint64 = 32          // Python: flag_forbid_send_response_to_intermediate_node_on_reservation
+	FlagForbidSendMessageFinalPathConfig               uint64 = 64          // Python: flag_forbid_send_message_with_final_path_configuration
+	FlagForbidSendMessageFinalAmountClarification      uint64 = 128         // Python: flag_forbid_send_message_on_final_amount_clarification
+	FlagForbidSendMessageVoteStage                     uint64 = 256         // Python: flag_forbid_send_message_on_vote_stage
+	FlagForbidSendMessageVoteConsistency               uint64 = 512         // Python: flag_forbid_send_message_on_vote_consistency
+	FlagForbidSendMessageRecoveryStage                 uint64 = 1024        // Python: flag_forbid_send_message_on_recovery_stage
+	FlagThrowExceptionPreviousNeighborRequest          uint64 = 2048        // Python: flag_throw_exception_on_previous_neighbor_request
+	FlagThrowExceptionCoordinatorRequest               uint64 = 4096        // Python: flag_throw_exception_on_coordinator_request_processing
+	FlagThrowExceptionNextNeighborResponse             uint64 = 8192        // Python: flag_throw_exception_on_next_neighbor_response_processing
+	FlagThrowExceptionVote                             uint64 = 16384       // Python: flag_throw_exception_on_vote
+	FlagThrowExceptionVoteConsistency                  uint64 = 32768       // Python: flag_throw_exception_on_vote_consistency
+	FlagThrowExceptionCoordinatorAfterApprove          uint64 = 65536       // Python: flag_throw_exception_on_coordinator_after_approve_before_send_message
+	FlagThrowExceptionOnObservingSubmitClaimStage      uint64 = 131072      // Python: flag_throw_exception_on_observing_submit_claim_stage
+	FlagThrowExceptionOnObservingCheckClaimStatusStage uint64 = 262144      // Python: flag_throw_exception_on_observing_check_claim_status_stage
+	FlagTerminateProcessPreviousNeighborRequest        uint64 = 2097152     // Python: flag_terminate_process_on_previous_neighbor_request
+	FlagTerminateProcessCoordinatorRequest             uint64 = 4194304     // Python: flag_terminate_process_on_coordinator_request_processing
+	FlagTerminateProcessNextNeighborResponse           uint64 = 8388608     // Python: flag_terminate_process_on_next_neighbor_response_processing
+	FlagTerminateProcessVote                           uint64 = 16777216    // Python: flag_terminate_process_on_vote
+	FlagTerminateProcessVoteConsistency                uint64 = 33554432    // Python: flag_terminate_process_on_vote_consistency
+	FlagTerminateProcessCoordinatorAfterApprove        uint64 = 67108864    // Python: flag_terminate_process_on_coordinator_after_approve_before_send_message
+	FlagTerminateProcessOnObservingSubmitClaimStage    uint64 = 134217728   // Python: flag_terminate_process_on_observing_submit_claim_stage
+	FlagSleepOnNextNeighborResponseProcessing          uint64 = 8589934592  // Python: flag_sleep_on_next_neighbor_response_processing
+	FlagSleepOnFinalAmountClarification                uint64 = 17179869184 // Python: flag_sleep_on_final_amount_clarification
+	FlagSleepOnVoteConsistencyStage                    uint64 = 68719476736 // Python: flag_sleep_on_vote_consistency_stage
 )
 
 type Node struct {
@@ -1069,26 +1073,24 @@ func (n *Node) CheckExchangeMaxFlowBatch(t *testing.T, checks []MaxFlowBatchChec
 	}
 }
 
-func (n *Node) SetTestingFlag(flag uint64, appliableNodeAddress string, appliableAmount string) error {
+func (n *Node) SetTestingFlag(t *testing.T, flag uint64, appliableNodeAddress string, appliableAmount string) {
 	url := fmt.Sprintf("http://%s:%d/api/v1/node/subsystems-controller/%d/?forbidden_address=%s&forbidden_amount=%s",
 		n.IPAddress, n.CLIPortTest, flag, appliableNodeAddress, appliableAmount)
 
 	request, err := http.NewRequest(http.MethodPut, url, nil)
 	if err != nil {
-		return fmt.Errorf("failed to send set testing flag request: %w", err)
+		t.Fatalf("failed to send set testing flag request: %v", err)
 	}
 	request.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
 	setResp, err := client.Do(request)
 	if err != nil {
-		return fmt.Errorf("failed to send subsystems-controller request: %w", err)
+		t.Fatalf("failed to send subsystems-controller request: %v", err)
 	}
 	defer setResp.Body.Close()
 	if setResp.StatusCode != http.StatusOK {
-		return fmt.Errorf("subsystems-controller request failed with status: %d", setResp.StatusCode)
+		t.Fatalf("subsystems-controller request failed with status: %d", setResp.StatusCode)
 	}
-
-	return nil
 }
 
 func (n *Node) SetTestingSLFlag(flag uint64, firstParam, secondParam, thirdParam string) error {
@@ -2327,7 +2329,7 @@ func (n *Node) CheckSerializedTransaction(
 	} else if strings.Contains(dbConfig, "postgresql") {
 		n.CheckSerializedTransactionPostgreSQL(t, isTransactionShouldBePresent, timeToSleepSeconds)
 	} else {
-		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+		n.CheckSerializedTransactionSQLite(t, isTransactionShouldBePresent, timeToSleepSeconds)
 	}
 }
 
@@ -2339,7 +2341,7 @@ func (n *Node) CheckValidKeys(t *testing.T, expectedOwnValidKeysCount, expectedC
 	} else if strings.Contains(dbConfig, "postgresql") {
 		n.CheckValidKeysPostgreSQL(t, expectedOwnValidKeysCount, expectedContractorValidKeysCount)
 	} else {
-		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+		n.CheckValidKeysSQLite(t, expectedOwnValidKeysCount, expectedContractorValidKeysCount)
 	}
 }
 
@@ -2351,7 +2353,7 @@ func (n *Node) CheckSettlementLineState(t *testing.T, targetNode *Node, equivale
 	} else if strings.Contains(dbConfig, "postgresql") {
 		n.CheckSettlementLineStatePostgreSQL(t, targetNode, equivalent, expectedState)
 	} else {
-		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+		n.CheckSettlementLineStateSQLite(t, targetNode, equivalent, expectedState)
 	}
 }
 
@@ -2363,7 +2365,7 @@ func (n *Node) CheckPaymentRecordWithCommandUUID(t *testing.T, commandUUID strin
 	} else if strings.Contains(dbConfig, "postgresql") {
 		n.CheckPaymentRecordWithCommandUUIDPostgreSQL(t, commandUUID, shouldBePresent)
 	} else {
-		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+		n.CheckPaymentRecordWithCommandUUIDSQLite(t, commandUUID, shouldBePresent)
 	}
 }
 
@@ -2375,7 +2377,7 @@ func (n *Node) CheckCurrentAudit(t *testing.T, targetNode *Node, equivalent stri
 	} else if strings.Contains(dbConfig, "postgresql") {
 		n.CheckCurrentAuditPostgreSQL(t, targetNode, equivalent, expectedAuditNumber)
 	} else {
-		t.Fatalf("Node %s: Unrecognized database configuration: '%s'. Expected 'sqlite' or 'postgresql' in VTCPD_DATABASE_CONFIG", n.Alias, dbConfig)
+		n.CheckCurrentAuditSQLite(t, targetNode, equivalent, expectedAuditNumber)
 	}
 }
 

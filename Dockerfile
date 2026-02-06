@@ -386,7 +386,13 @@ cat <<EOF > /vtcp/vtcpd/conf.json\n\
   ],\n\
   "database_config": "${VTCPD_DATABASE_CONFIG}",\n\
   "equivalents_registry_address": "${VTCPD_EQUIVALENTS_REGISTRY}",\n\
-  "max_hops_count": ${VTCPD_MAX_HOPS}\n\
+  "max_hops_count": ${VTCPD_MAX_HOPS},\n\
+  "observers": [\n\
+    {\n\
+      "type": "ipv4",\n\
+      "address": "172.17.0.1:8085"\n\
+    }\n\
+  ]\n\
 }\n\
 EOF\n\
 # Create cli config file
@@ -481,7 +487,13 @@ cat <<EOF > /vtcp/vtcpd/conf.json\n\
   ],\n\
   "database_config": "${VTCPD_DATABASE_CONFIG}",\n\
   "equivalents_registry_address": "${VTCPD_EQUIVALENTS_REGISTRY}",\n\
-  "max_hops_count": ${VTCPD_MAX_HOPS}\n\
+  "max_hops_count": ${VTCPD_MAX_HOPS},\n\
+  "observers": [\n\
+    {\n\
+      "type": "ipv4",\n\
+      "address": "172.17.0.1:8085"\n\
+    }\n\
+  ]\n\
 }\n\
 EOF\n\
 # Create cli config file

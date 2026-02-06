@@ -68,14 +68,14 @@ func setupNodesForPaymentTimeoutsPartTwoTest(t *testing.T) ([]*vtcp.Node, *vtcp.
 func TestTimeoutsPartTwo1aCheckNodeOnlyOnOnePathPaymentPass(t *testing.T) {
 	nodes, _ := setupNodesForPaymentTimeoutsPartTwoTest(t)
 
-	nodes[3].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[4].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[5].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[6].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[7].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[8].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[9].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[10].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[3].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[5].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[6].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[7].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[8].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[9].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[10].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
 
 	nodes[0].CreateTransactionCheckStatus(t, nodes[1], testconfig.Equivalent, "1000", vtcp.StatusOK)
 
@@ -85,16 +85,16 @@ func TestTimeoutsPartTwo1aCheckNodeOnlyOnOnePathPaymentPass(t *testing.T) {
 func TestTimeoutsPartTwo1bCheckNodeLostFinalConfiguration(t *testing.T) {
 	nodes, _ := setupNodesForPaymentTimeoutsPartTwoTest(t)
 
-	nodes[3].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[4].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[5].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[6].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[7].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[8].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[9].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[10].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[3].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[5].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[6].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[7].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[8].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[9].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[10].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
 
-	nodes[0].SetTestingFlag(vtcp.FlagForbidSendMessageFinalPathConfig, "", "")
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageFinalPathConfig, "", "")
 
 	nodes[0].CreateTransactionCheckStatus(t, nodes[1], testconfig.Equivalent, "1000", vtcp.StatusOK)
 
@@ -104,16 +104,16 @@ func TestTimeoutsPartTwo1bCheckNodeLostFinalConfiguration(t *testing.T) {
 func TestTimeoutsPartTwo1cLostMessagesOnOtherPathWithoutPass(t *testing.T) {
 	nodes, _ := setupNodesForPaymentTimeoutsPartTwoTest(t)
 
-	nodes[3].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[4].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[5].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[6].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[7].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[8].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[9].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
-	nodes[10].SetTestingFlag(vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[3].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[5].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[6].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[7].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[8].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[9].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
+	nodes[10].SetTestingFlag(t, vtcp.FlagSleepOnNextNeighborResponseProcessing, "", "")
 
-	nodes[1].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[6].IPAddress, "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[6].IPAddress, "")
 
 	nodes[0].CreateTransactionCheckStatus(t, nodes[1], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 

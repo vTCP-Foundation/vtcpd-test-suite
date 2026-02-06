@@ -67,7 +67,7 @@ func setupNodesForSeveralPathsPaymentSearchingNewPathTest(t *testing.T) ([]*vtcp
 func Test1aSearchingNewPathNormalPassWithoutSearchingAdditionalPaths(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathsPaymentSearchingNewPathTest(t)
 
-	nodes[8].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
+	nodes[8].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[8], testconfig.Equivalent, "1000", vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[8], testconfig.Equivalent, "900")
@@ -76,8 +76,8 @@ func Test1aSearchingNewPathNormalPassWithoutSearchingAdditionalPaths(t *testing.
 func Test1bSearchingNewPathNormalPassWithSearchingAdditionalPath(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathsPaymentSearchingNewPathTest(t)
 
-	nodes[8].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
-	nodes[1].SetTestingFlag(vtcp.FlagForbidSendRequestToIntermediateReservation, nodes[2].GetIPAddressForRequests(), "")
+	nodes[8].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendRequestToIntermediateReservation, nodes[2].GetIPAddressForRequests(), "")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[8], testconfig.Equivalent, "1000", vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[8], testconfig.Equivalent, "900")
@@ -86,9 +86,9 @@ func Test1bSearchingNewPathNormalPassWithSearchingAdditionalPath(t *testing.T) {
 func Test1cSearchingNewPathWithSearchingTwoAdditionalPaths(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathsPaymentSearchingNewPathTest(t)
 
-	nodes[8].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
-	nodes[1].SetTestingFlag(vtcp.FlagForbidSendRequestToIntermediateReservation, nodes[2].GetIPAddressForRequests(), "")
-	nodes[3].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", "")
+	nodes[8].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendRequestToIntermediateReservation, nodes[2].GetIPAddressForRequests(), "")
+	nodes[3].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", "")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[8], testconfig.Equivalent, "1000", vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[8], testconfig.Equivalent, "900")
@@ -97,7 +97,7 @@ func Test1cSearchingNewPathWithSearchingTwoAdditionalPaths(t *testing.T) {
 func Test2aSearchingNewPathWithoutPassNoEnoughAmount(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathsPaymentSearchingNewPathTest(t)
 
-	nodes[8].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
+	nodes[8].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[8], testconfig.Equivalent, "1500", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[8], testconfig.Equivalent, "1900")
@@ -106,10 +106,10 @@ func Test2aSearchingNewPathWithoutPassNoEnoughAmount(t *testing.T) {
 func Test2bSearchingNewPathWithoutPassLostMessage(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathsPaymentSearchingNewPathTest(t)
 
-	nodes[8].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
-	nodes[1].SetTestingFlag(vtcp.FlagForbidSendRequestToIntermediateReservation, nodes[2].GetIPAddressForRequests(), "")
-	nodes[3].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", "")
-	nodes[5].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", "")
+	nodes[8].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendRequestToIntermediateReservation, nodes[2].GetIPAddressForRequests(), "")
+	nodes[3].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", "")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", "")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[8], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[8], testconfig.Equivalent, "1900")

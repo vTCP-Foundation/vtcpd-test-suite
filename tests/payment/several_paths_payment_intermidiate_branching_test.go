@@ -74,7 +74,7 @@ func Test1IntermediateBranchingNormalAmount(t *testing.T) {
 func Test2aIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCommonLeftNodeOnShortPathToCoordinatorPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[4].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "500")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "500")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "500", vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "500")
@@ -83,7 +83,7 @@ func Test2aIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCom
 func Test2bIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCommonLeftNodeOnShortPathToCoordinatorNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[4].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "500")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "500")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -92,7 +92,7 @@ func Test2bIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCom
 func Test3aIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCommonLeftNodeOnMiddlePathToCoordinatorPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[4].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "300")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "300")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "700", vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "300")
@@ -101,7 +101,7 @@ func Test3aIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCom
 func Test3bIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCommonLeftNodeOnMiddlePathToCoordinatorNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[4].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "300")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "300")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -110,7 +110,7 @@ func Test3bIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCom
 func Test4IntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCommonLeftNodeOnLongPathToCoordinatorNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[4].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "200")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "200")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -119,7 +119,7 @@ func Test4IntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgComm
 func Test5aIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsgCommonLeftNodeOnShortPathToCoordinatorPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[4].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[0].GetIPAddressForRequests(), "500")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[0].GetIPAddressForRequests(), "500")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "500", vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "500")
@@ -128,7 +128,7 @@ func Test5aIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsg
 func Test5bIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsgCommonLeftNodeOnShortPathToCoordinatorNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[4].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[0].GetIPAddressForRequests(), "500")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[0].GetIPAddressForRequests(), "500")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -137,7 +137,7 @@ func Test5bIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsg
 func Test6aIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsgCommonLeftNodeOnMiddlePathToCoordinatorPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[4].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[1].GetIPAddressForRequests(), "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[1].GetIPAddressForRequests(), "")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "700", vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "300")
@@ -146,7 +146,7 @@ func Test6aIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsg
 func Test6bIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsgCommonLeftNodeOnMiddlePathToCoordinatorNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[4].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[1].GetIPAddressForRequests(), "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[1].GetIPAddressForRequests(), "")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -155,7 +155,7 @@ func Test6bIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsg
 func Test7IntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsgCommonLeftNodeOnLongPathToCoordinatorNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[4].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[3].GetIPAddressForRequests(), "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[3].GetIPAddressForRequests(), "")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -164,7 +164,7 @@ func Test7IntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsgC
 func Test8aIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCommonRightNodeOnShortPathToCoordinatorPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[5].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[7].GetIPAddressForRequests(), "500")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[7].GetIPAddressForRequests(), "500")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "500", vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "500")
@@ -173,7 +173,7 @@ func Test8aIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCom
 func Test8bIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCommonRightNodeOnShortPathToCoordinatorNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[5].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[7].GetIPAddressForRequests(), "500")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[7].GetIPAddressForRequests(), "500")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -182,7 +182,7 @@ func Test8bIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCom
 func Test9aIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCommonRightNodeOnMiddlePathToCoordinatorPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[5].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[6].GetIPAddressForRequests(), "300")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[6].GetIPAddressForRequests(), "300")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "700", vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "300")
@@ -191,7 +191,7 @@ func Test9aIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCom
 func Test9bIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCommonRightNodeOnMiddlePathToCoordinatorNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[5].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[6].GetIPAddressForRequests(), "300")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[6].GetIPAddressForRequests(), "300")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -200,7 +200,7 @@ func Test9bIntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCom
 func Test10IntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCommonRightNodeOnLongPathToCoordinatorNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[5].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[6].GetIPAddressForRequests(), "200")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[6].GetIPAddressForRequests(), "200")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -209,7 +209,7 @@ func Test10IntermediateBranchingRunNextNeighborResponseProcessingStageLostMsgCom
 func Test11aIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsgCommonRightNodeOnShortPathToCoordinatorPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[5].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[4].GetIPAddressForRequests(), "500")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[4].GetIPAddressForRequests(), "500")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "500", vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "500")
@@ -218,7 +218,7 @@ func Test11aIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMs
 func Test11bIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsgCommonRightNodeOnShortPathToCoordinatorNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[5].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[4].GetIPAddressForRequests(), "500")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[4].GetIPAddressForRequests(), "500")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -227,7 +227,7 @@ func Test11bIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMs
 func Test12aIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsgCommonRightNodeOnMiddlePathToCoordinatorPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[5].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[4].GetIPAddressForRequests(), "300")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[4].GetIPAddressForRequests(), "300")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "700", vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "300")
@@ -236,7 +236,7 @@ func Test12aIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMs
 func Test12bIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsgCommonRightNodeOnMiddlePathToCoordinatorNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[5].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[4].GetIPAddressForRequests(), "300")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[4].GetIPAddressForRequests(), "300")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -245,7 +245,7 @@ func Test12bIntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMs
 func Test13IntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsgCommonRightNodeOnLongPathToCoordinatorNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[5].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[4].GetIPAddressForRequests(), "200")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, nodes[4].GetIPAddressForRequests(), "200")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -254,8 +254,8 @@ func Test13IntermediateBranchingRunPreviousNeighborRequestProcessingStageLostMsg
 func Test14aIntermediateBranchingAddNewPathsPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[0].SetTestingFlag(vtcp.FlagForbidSendRequestToIntermediateReservation, nodes[4].GetIPAddressForRequests(), "")
-	nodes[1].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendRequestToIntermediateReservation, nodes[4].GetIPAddressForRequests(), "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "100", vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "900")
@@ -264,8 +264,8 @@ func Test14aIntermediateBranchingAddNewPathsPassed(t *testing.T) {
 func Test14bIntermediateBranchingAddNewPathsNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[0].SetTestingFlag(vtcp.FlagForbidSendRequestToIntermediateReservation, nodes[4].GetIPAddressForRequests(), "")
-	nodes[1].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendRequestToIntermediateReservation, nodes[4].GetIPAddressForRequests(), "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "300", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")
@@ -274,9 +274,9 @@ func Test14bIntermediateBranchingAddNewPathsNotPassed(t *testing.T) {
 func Test14cIntermediateBranchingAddNewPathsMsgLostNotPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathPaymentIntermidiateBranchingTest(t)
 
-	nodes[0].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[4].GetIPAddressForRequests(), "")
-	nodes[1].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
-	nodes[2].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[4].GetIPAddressForRequests(), "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
+	nodes[2].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
 	nodes[0].CreateTransactionCheckStatus(t, nodes[7], testconfig.Equivalent, "300", vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckMaxFlow(t, nodes[7], testconfig.Equivalent, "1000")

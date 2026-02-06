@@ -68,9 +68,7 @@ func Test4aLostAskNeighborToReserveAmountMsgFromCoordinatorToFirstIntermediateNo
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
 	// self.flag_forbid_send_request_to_intermediate_node_on_reservation (Corresponds to flag 1 in two_nodes tests)
-	if err := nodes[0].SetTestingFlag(vtcp.FlagForbidSendRequestToIntermediateReservation, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node1: %v", err)
-	}
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendRequestToIntermediateReservation, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -79,9 +77,7 @@ func Test4bLostAskNeighborToApproveFurtherNodeReservationMsgFromCoordinatorToFir
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
 	// self.flag_forbid_send_message_to_coordinator_on_reservation (New flag)
-	if err := nodes[0].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node1: %v", err)
-	}
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -90,9 +86,7 @@ func Test4cLostAskRemoteNodeToApproveReservationMsgFromCoordinatorToLastIntermed
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
 	// self.flag_forbid_send_message_to_coordinator_on_reservation (New flag)
-	if err := nodes[0].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[2].GetIPAddressForRequests(), ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node1: %v", err)
-	}
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[2].GetIPAddressForRequests(), "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -101,9 +95,7 @@ func Test4dLostProcessNeighborAmountReservationResponseMsgFromFirstIntermediateN
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
 	// self.flag_forbid_send_response_to_intermediate_node_on_reservation (Corresponds to flag 2)
-	if err := nodes[1].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node2: %v", err)
-	}
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -112,9 +104,7 @@ func Test4eLostMsgFromFirstIntermediateNodeToNextIntermediateNodeExchange(t *tes
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
 	// self.flag_forbid_send_request_to_intermediate_node_on_reservation (Corresponds to flag 1)
-	if err := nodes[1].SetTestingFlag(vtcp.FlagForbidSendRequestToIntermediateReservation, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node2: %v", err)
-	}
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendRequestToIntermediateReservation, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -123,9 +113,7 @@ func Test4fLostMsgFromNextIntermediateNodeToPreviousExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
 	// self.flag_forbid_send_response_to_intermediate_node_on_reservation (Corresponds to flag 2)
-	if err := nodes[2].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node3: %v", err)
-	}
+	nodes[2].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -134,9 +122,7 @@ func Test4gLostMsgFromLastIntermediateNodeReceiverExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
 	// self.flag_forbid_send_request_to_intermediate_node_on_reservation (Corresponds to flag 1)
-	if err := nodes[5].SetTestingFlag(vtcp.FlagForbidSendRequestToIntermediateReservation, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node6: %v", err)
-	}
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendRequestToIntermediateReservation, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -145,9 +131,7 @@ func Test4hLostMsgReceiverToPreviousExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
 	// self.flag_forbid_send_response_to_intermediate_node_on_reservation (Corresponds to flag 2)
-	if err := nodes[6].SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node7: %v", err)
-	}
+	nodes[6].SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -156,9 +140,7 @@ func Test4jLostProcessNeighborFurtherReservationResponseMsgFromFirstIntermediate
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
 	// self.flag_forbid_send_message_to_coordinator_on_reservation (New flag)
-	if err := nodes[0].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", ""); err != nil { // Assuming node1 is the coordinator contextually
-		t.Fatalf("SetTestingFlag failed for node1: %v", err)
-	}
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -167,9 +149,7 @@ func Test4kLostProcessRemoteNodeResponseMsgFromLastIntermediateNodeToCoordinator
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
 	// self.flag_forbid_send_message_to_coordinator_on_reservation (New flag)
-	if err := nodes[5].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node6: %v", err)
-	}
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -177,10 +157,7 @@ func Test4kLostProcessRemoteNodeResponseMsgFromLastIntermediateNodeToCoordinator
 func Test5LostMessageWithPathFinalConfigurationExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_forbid_send_message_with_final_path_configuration (New flag)
-	if err := nodes[0].SetTestingFlag(vtcp.FlagForbidSendMessageFinalPathConfig, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node1: %v", err)
-	}
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageFinalPathConfig, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK) // Default status in Pyt	hon
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -188,10 +165,7 @@ func Test5LostMessageWithPathFinalConfigurationExchange(t *testing.T) {
 func Test6aLostMessageWithFinalConfigurationToIntermediateNodeExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_forbid_send_message_on_final_amount_clarification (New flag)
-	if err := nodes[0].SetTestingFlag(vtcp.FlagForbidSendMessageFinalAmountClarification, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node1: %v", err)
-	}
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageFinalAmountClarification, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusProtocolError)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -199,10 +173,7 @@ func Test6aLostMessageWithFinalConfigurationToIntermediateNodeExchange(t *testin
 func Test6bLostMessageWithFinalConfigurationToCoordinatorExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_forbid_send_message_on_final_amount_clarification (New flag)
-	if err := nodes[3].SetTestingFlag(vtcp.FlagForbidSendMessageFinalAmountClarification, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node4: %v", err)
-	}
+	nodes[3].SetTestingFlag(t, vtcp.FlagForbidSendMessageFinalAmountClarification, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusProtocolError)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -210,10 +181,7 @@ func Test6bLostMessageWithFinalConfigurationToCoordinatorExchange(t *testing.T) 
 func Test7aLostMsgWithPublicKeysToFirstIntermediateNodeExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	err := nodes[0].SetTestingFlag(vtcp.FlagForbidSendMessageVoteStage, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteStage, "", "")
 
 	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusProtocolError)
 	if err != nil {
@@ -284,12 +252,8 @@ func Test7aLostMsgWithPublicKeysToFirstIntermediateNodeExchange(t *testing.T) {
 func Test7bLostMsgWithSignatureToCoordinatorExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	if err := nodes[1].SetTestingFlag(vtcp.FlagForbidSendMessageVoteConsistency, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node2: %v", err)
-	}
-	if err := nodes[5].SetTestingFlag(vtcp.FlagForbidSendMessageVoteConsistency, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node6: %v", err)
-	}
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteConsistency, "", "")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteConsistency, "", "")
 
 	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusProtocolError)
 	if err != nil {
@@ -368,13 +332,8 @@ func Test7bLostMsgWithSignatureToCoordinatorExchange(t *testing.T) {
 func Test7cLostMsgWithPublicKeyHashFromIntermediateNodeToParticipantsExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_forbid_send_message_on_vote_stage (Corresponds to flag 3)
-	if err := nodes[1].SetTestingFlag(vtcp.FlagForbidSendMessageVoteStage, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node2: %v", err)
-	}
-	if err := nodes[4].SetTestingFlag(vtcp.FlagForbidSendMessageVoteStage, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node5: %v", err)
-	}
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteStage, "", "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteStage, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusProtocolError)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3) // Default 3s sleep from Python original
 }
@@ -382,10 +341,7 @@ func Test7cLostMsgWithPublicKeyHashFromIntermediateNodeToParticipantsExchange(t 
 func Test7dLostMsgWithSignatureFromCoordinatorToAllIntermediateNodesExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_forbid_send_message_on_vote_consistency (Corresponds to flag 4)
-	if err := nodes[0].SetTestingFlag(vtcp.FlagForbidSendMessageVoteConsistency, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node1: %v", err)
-	}
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteConsistency, "", "")
 
 	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
 	if err != nil {
@@ -403,13 +359,13 @@ func Test7dLostMsgWithSignatureFromCoordinatorToAllIntermediateNodesExchange(t *
 	nodes[5].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
 	nodes[6].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
 
-	nodes[0].CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 7, 0, 1)
-	nodes[1].CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 7, 1, 1)
-	nodes[2].CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 7, 1, 1)
-	nodes[3].CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 7, 1, 1)
-	nodes[4].CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 7, 1, 1)
-	nodes[5].CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 7, 1, 1)
-	nodes[6].CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 7, 1, 0)
+	nodes[0].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 0, 1)
+	nodes[1].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[2].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[3].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[4].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[5].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[6].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 0)
 
 	nodes[0].CheckSerializedTransaction(t, false, 0)
 	nodes[1].CheckSerializedTransaction(t, false, 0)
@@ -418,17 +374,15 @@ func Test7dLostMsgWithSignatureFromCoordinatorToAllIntermediateNodesExchange(t *
 	nodes[4].CheckSerializedTransaction(t, false, 0)
 	nodes[5].CheckSerializedTransaction(t, false, 0)
 	nodes[6].CheckSerializedTransaction(t, false, 0)
-	// Python: # self.node_1.check_max_flow({self.node_7.address: 0}) -> Not checking max flow here
+
+	// TODO: uncomment this when topology cashing is fixed
+	// nodes[0].CheckExchangeMaxFlow(t, nodes[6], testconfig.Equivalent, []string{testconfig.Equivalent}, "0")
 }
 
 func Test7eLostMsgWithSignatureFromCoordinatorToAllIntermediateNodesAlsoOnRecoveryExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// flag_forbid_send_message_on_recovery_stage = 103 (New)
-	if err := nodes[0].SetTestingFlag(vtcp.FlagForbidSendMessageVoteConsistency, "", ""); err != nil { // Applied vote consistency flag
-		t.Fatalf("SetTestingFlag failed for node1: %v", err)
-	}
-
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteConsistency, "", "")
 	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
@@ -498,14 +452,59 @@ func Test7eLostMsgWithSignatureFromCoordinatorToAllIntermediateNodesAlsoOnRecove
 	// Python: # self.node_1.check_max_flow({self.node_7.address: 0})
 }
 
+func Test7fLostMsgWithSignatureFromCoordinatorToAllIntermediateNodesIncludinfRecoveryStageExchange(t *testing.T) {
+	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
+
+	// self.flag_forbid_send_message_on_vote_consistency (Corresponds to flag)
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteConsistency, "", "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageRecoveryStage, "", "")
+	nodes[2].SetTestingFlag(t, vtcp.FlagForbidSendMessageRecoveryStage, "", "")
+	nodes[3].SetTestingFlag(t, vtcp.FlagForbidSendMessageRecoveryStage, "", "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendMessageRecoveryStage, "", "")
+	nodes[5].SetTestingFlag(t, vtcp.FlagForbidSendMessageRecoveryStage, "", "")
+	nodes[6].SetTestingFlag(t, vtcp.FlagForbidSendMessageRecoveryStage, "", "")
+
+	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
+	if err != nil {
+		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
+	}
+	// Waiting for 15 minutes to simulate the time period of the recovery stage with observing
+	time.Sleep(15 * time.Minute)
+
+	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
+
+	nodes[0].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, false)
+	nodes[1].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[2].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[3].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[4].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[5].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[6].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+
+	nodes[0].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 0, 1)
+	nodes[1].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[2].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[3].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[4].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[5].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[6].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 0)
+
+	nodes[0].CheckSerializedTransaction(t, false, 0)
+	nodes[1].CheckSerializedTransaction(t, false, 0)
+	nodes[2].CheckSerializedTransaction(t, false, 0)
+	nodes[3].CheckSerializedTransaction(t, false, 0)
+	nodes[4].CheckSerializedTransaction(t, false, 0)
+	nodes[5].CheckSerializedTransaction(t, false, 0)
+	nodes[6].CheckSerializedTransaction(t, false, 0)
+
+	// TODO: uncomment this when topology cashing is fixed
+	// nodes[0].CheckExchangeMaxFlow(t, nodes[6], testconfig.Equivalent, []string{testconfig.Equivalent}, "0")
+}
+
 func Test8aCrashCoordinatorAfterSendingMessageOnVotingExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_throw_exception_on_vote (Corresponds to flag 6)
-	if err := nodes[0].SetTestingFlag(vtcp.FlagThrowExceptionVote, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node1: %v", err)
-	}
-
+	nodes[0].SetTestingFlag(t, vtcp.FlagThrowExceptionVote, "", "")
 	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusProtocolError)
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
@@ -583,11 +582,7 @@ func Test8aCrashCoordinatorAfterSendingMessageOnVotingExchange(t *testing.T) {
 func Test8bCrashCoordinatorAfterReceivingMessageWithSignatureExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_throw_exception_on_vote_consistency (Corresponds to flag 7)
-	if err := nodes[0].SetTestingFlag(vtcp.FlagThrowExceptionVoteConsistency, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node1: %v", err)
-	}
-
+	nodes[0].SetTestingFlag(t, vtcp.FlagThrowExceptionVoteConsistency, "", "")
 	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusProtocolError)
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
@@ -665,20 +660,14 @@ func Test8bCrashCoordinatorAfterReceivingMessageWithSignatureExchange(t *testing
 func Test9aCrashIntermediateNodeRunPreviousNeighborRequestProcessingStageExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_throw_exception_on_previous_neighbor_request (Corresponds to flag 5)
-	if err := nodes[2].SetTestingFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node3: %v", err)
-	}
+	nodes[2].SetTestingFlag(t, vtcp.FlagThrowExceptionPreviousNeighborRequest, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
 func Test9bCrashIntermediateNodeRunCoordinatorRequestProcessingStageExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_throw_exception_on_coordinator_request_processing (New flag)
-	if err := nodes[2].SetTestingFlag(vtcp.FlagThrowExceptionCoordinatorRequest, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node3: %v", err)
-	}
+	nodes[2].SetTestingFlag(t, vtcp.FlagThrowExceptionCoordinatorRequest, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -686,10 +675,7 @@ func Test9bCrashIntermediateNodeRunCoordinatorRequestProcessingStageExchange(t *
 func Test9cCrashIntermediateNodeRunNextNeighborResponseProcessingStageExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_throw_exception_on_next_neighbor_response_processing (New flag)
-	if err := nodes[2].SetTestingFlag(vtcp.FlagThrowExceptionNextNeighborResponse, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node3: %v", err)
-	}
+	nodes[2].SetTestingFlag(t, vtcp.FlagThrowExceptionNextNeighborResponse, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -697,16 +683,9 @@ func Test9cCrashIntermediateNodeRunNextNeighborResponseProcessingStageExchange(t
 func Test9dCrashIntermediateNodeAfterSignBeforeSendResponseExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_throw_exception_on_vote (Corresponds to flag 6)
-	if err := nodes[1].SetTestingFlag(vtcp.FlagThrowExceptionVote, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node2: %v", err)
-	}
-	if err := nodes[2].SetTestingFlag(vtcp.FlagThrowExceptionVote, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node3: %v", err)
-	}
-	if err := nodes[4].SetTestingFlag(vtcp.FlagThrowExceptionVote, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node5: %v", err)
-	}
+	nodes[1].SetTestingFlag(t, vtcp.FlagThrowExceptionVote, "", "")
+	nodes[2].SetTestingFlag(t, vtcp.FlagThrowExceptionVote, "", "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagThrowExceptionVote, "", "")
 	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusProtocolError)
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
@@ -780,19 +759,12 @@ func Test9dCrashIntermediateNodeAfterSignBeforeSendResponseExchange(t *testing.T
 
 	nodes[0].CheckExchangeMaxFlow(t, nodes[6], testconfig.Equivalent, []string{testconfig.Equivalent}, "1000")
 }
-func Test9eStopProcessIntermediateNodeAfterVotesReceivingBeforeCommittingExchange(t *testing.T) {
+func Test9eCrashProcessIntermediateNodeAfterVotesReceivingBeforeCommittingExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_terminate_process_on_vote_consistency (Corresponds to flag 11)
-	if err := nodes[1].SetTestingFlag(vtcp.FlagTerminateProcessVoteConsistency, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node2: %v", err)
-	}
-	if err := nodes[2].SetTestingFlag(vtcp.FlagTerminateProcessVoteConsistency, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node3: %v", err)
-	}
-	if err := nodes[4].SetTestingFlag(vtcp.FlagTerminateProcessVoteConsistency, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node5: %v", err)
-	}
+	nodes[1].SetTestingFlag(t, vtcp.FlagThrowExceptionVoteConsistency, "", "")
+	nodes[2].SetTestingFlag(t, vtcp.FlagThrowExceptionVoteConsistency, "", "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagThrowExceptionVoteConsistency, "", "")
 	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
@@ -825,13 +797,51 @@ func Test9eStopProcessIntermediateNodeAfterVotesReceivingBeforeCommittingExchang
 	// Python: # self.node_1.check_max_flow({self.node_7.address: 0})
 }
 
+func Test9fCrashProcessIntermediateNodeBeforeSubmittingClaime(t *testing.T) {
+	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
+
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteConsistency, "", "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageRecoveryStage+vtcp.FlagThrowExceptionOnObservingSubmitClaimStage, "", "")
+	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
+	if err != nil {
+		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
+	}
+
+	// Waiting for 18 minutes to simulate the time period of the recovery stage with observing
+	time.Sleep(18 * time.Minute)
+
+	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
+
+	nodes[0].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, false)
+	nodes[1].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[2].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[3].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[4].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[5].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[6].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+
+	nodes[0].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 0, 1)
+	nodes[1].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[2].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[3].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[4].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[5].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[6].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 0)
+
+	nodes[0].CheckSerializedTransaction(t, false, 0)
+	nodes[1].CheckSerializedTransaction(t, false, 0)
+	nodes[2].CheckSerializedTransaction(t, false, 0)
+	nodes[3].CheckSerializedTransaction(t, false, 0)
+	nodes[4].CheckSerializedTransaction(t, false, 0)
+	nodes[5].CheckSerializedTransaction(t, false, 0)
+	nodes[6].CheckSerializedTransaction(t, false, 0)
+	// Python: # self.node_1.check_max_flow({self.node_7.address: 0})
+}
+
 func Test10aStopProcessCoordinatorAfterSendingMessageOnVotingExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_terminate_process_on_vote (Corresponds to flag 10)
-	if err := nodes[0].SetTestingFlag(vtcp.FlagTerminateProcessVote, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node1: %v", err)
-	}
+	nodes[0].SetTestingFlag(t, vtcp.FlagTerminateProcessVote, "", "")
 	// Python status_code=None implies OK or that the call might not return/complete normally due to process termination.
 	// Assuming OK for transaction creation initiation. The actual outcome is process termination.
 	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
@@ -872,10 +882,7 @@ func Test10aStopProcessCoordinatorAfterSendingMessageOnVotingExchange(t *testing
 func Test10bStopProcessCoordinatorAfterReceivingMessageWithSignaturesExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_terminate_process_on_vote_consistency (Corresponds to flag 11)
-	if err := nodes[0].SetTestingFlag(vtcp.FlagTerminateProcessVoteConsistency, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node1: %v", err)
-	}
+	nodes[0].SetTestingFlag(t, vtcp.FlagTerminateProcessVoteConsistency, "", "")
 	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK) // Python status_code=None
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
@@ -950,13 +957,51 @@ func Test10bStopProcessCoordinatorAfterReceivingMessageWithSignaturesExchange(t 
 	nodes[0].CheckExchangeMaxFlow(t, nodes[6], testconfig.Equivalent, []string{testconfig.Equivalent}, "1000")
 }
 
+func Test10fTerminateProcessIntermediateNodeBeforeSubmittingClaime(t *testing.T) {
+	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
+
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteConsistency, "", "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageRecoveryStage+vtcp.FlagTerminateProcessOnObservingSubmitClaimStage, "", "")
+	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
+	if err != nil {
+		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
+	}
+
+	// Waiting for 15 minutes to simulate the time period of the recovery stage with observing
+	time.Sleep(20 * time.Minute)
+
+	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
+
+	nodes[0].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, false)
+	nodes[1].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[2].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[3].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[4].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[5].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[6].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+
+	nodes[0].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 0, 1)
+	nodes[1].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[2].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[3].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[4].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[5].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[6].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 0)
+
+	nodes[0].CheckSerializedTransaction(t, false, 0)
+	nodes[1].CheckSerializedTransaction(t, false, 0)
+	nodes[2].CheckSerializedTransaction(t, false, 0)
+	nodes[3].CheckSerializedTransaction(t, false, 0)
+	nodes[4].CheckSerializedTransaction(t, false, 0)
+	nodes[5].CheckSerializedTransaction(t, false, 0)
+	nodes[6].CheckSerializedTransaction(t, false, 0)
+	// Python: # self.node_1.check_max_flow({self.node_7.address: 0})
+}
+
 func Test11aStopProcessIntermediateNodeRunPreviousNeighborRequestProcessingStageExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_terminate_process_on_previous_neighbor_request (Corresponds to flag 9)
-	if err := nodes[2].SetTestingFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node3: %v", err)
-	}
+	nodes[2].SetTestingFlag(t, vtcp.FlagTerminateProcessPreviousNeighborRequest, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -964,11 +1009,8 @@ func Test11aStopProcessIntermediateNodeRunPreviousNeighborRequestProcessingStage
 func Test11bStopProcessIntermediateNodeRunCoordinatorRequestProcessingStageExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_terminate_process_on_coordinator_request_processing (New flag)
 	// TODO: Verify flag value for flag_terminate_process_on_coordinator_request_processing
-	if err := nodes[2].SetTestingFlag(vtcp.FlagTerminateProcessCoordinatorRequest, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node3: %v", err)
-	}
+	nodes[2].SetTestingFlag(t, vtcp.FlagTerminateProcessCoordinatorRequest, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -976,11 +1018,8 @@ func Test11bStopProcessIntermediateNodeRunCoordinatorRequestProcessingStageExcha
 func Test11cStopProcessIntermediateNodeRunNextNeighborResponseProcessingStageExchange(t *testing.T) {
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
-	// self.flag_terminate_process_on_next_neighbor_response_processing (New flag)
 	// TODO: Verify flag value for flag_terminate_process_on_next_neighbor_response_processing
-	if err := nodes[2].SetTestingFlag(vtcp.FlagTerminateProcessNextNeighborResponse, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node3: %v", err)
-	}
+	nodes[2].SetTestingFlag(t, vtcp.FlagTerminateProcessNextNeighborResponse, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 3)
 }
@@ -989,15 +1028,9 @@ func Test11dStopProcessIntermediateNodeAfterSignBeforeSendingExchange(t *testing
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
 	// self.flag_terminate_process_on_vote (Corresponds to flag 10)
-	if err := nodes[1].SetTestingFlag(vtcp.FlagTerminateProcessVote, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node2: %v", err)
-	}
-	if err := nodes[2].SetTestingFlag(vtcp.FlagTerminateProcessVote, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node3: %v", err)
-	}
-	if err := nodes[4].SetTestingFlag(vtcp.FlagTerminateProcessVote, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node5: %v", err)
-	}
+	nodes[1].SetTestingFlag(t, vtcp.FlagTerminateProcessVote, "", "")
+	nodes[2].SetTestingFlag(t, vtcp.FlagTerminateProcessVote, "", "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagTerminateProcessVote, "", "")
 	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusProtocolError)
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
@@ -1076,15 +1109,9 @@ func Test11eStopProcessIntermediateNodeAfterVotesReceivingBeforeCommittingExchan
 	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
 
 	// self.flag_terminate_process_on_vote_consistency (Corresponds to flag 11)
-	if err := nodes[1].SetTestingFlag(vtcp.FlagTerminateProcessVoteConsistency, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node2: %v", err)
-	}
-	if err := nodes[2].SetTestingFlag(vtcp.FlagTerminateProcessVoteConsistency, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node3: %v", err)
-	}
-	if err := nodes[4].SetTestingFlag(vtcp.FlagTerminateProcessVoteConsistency, "", ""); err != nil {
-		t.Fatalf("SetTestingFlag failed for node5: %v", err)
-	}
+	nodes[1].SetTestingFlag(t, vtcp.FlagTerminateProcessVoteConsistency, "", "")
+	nodes[2].SetTestingFlag(t, vtcp.FlagTerminateProcessVoteConsistency, "", "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagTerminateProcessVoteConsistency, "", "")
 	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
@@ -1115,4 +1142,147 @@ func Test11eStopProcessIntermediateNodeAfterVotesReceivingBeforeCommittingExchan
 	nodes[5].CheckSerializedTransaction(t, false, 0)
 	nodes[6].CheckSerializedTransaction(t, false, 0)
 	// Python: # self.node_1.check_max_flow({self.node_7.address: 0})
+}
+
+func Test12aAuditDuringRecoveryStageExchange(t *testing.T) {
+	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
+
+	// self.flag_forbid_send_message_on_vote_consistency (Corresponds to flag)
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteConsistency, "", "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageRecoveryStage, "", "")
+
+	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
+	if err != nil {
+		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
+	}
+	// Waiting for 15 minutes to simulate the time period of the recovery stage with observing
+	time.Sleep(5 * time.Minute)
+
+	nodes[0].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, false)
+	nodes[1].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[2].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[3].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[4].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[5].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[6].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+
+	nodes[0].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 0, 1)
+	nodes[1].CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 1, 0, 1, 1)
+	nodes[2].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[3].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[4].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[5].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[6].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 0)
+
+	nodes[0].CheckSerializedTransaction(t, false, 0)
+	nodes[1].CheckSerializedTransaction(t, true, 0)
+	nodes[2].CheckSerializedTransaction(t, false, 0)
+	nodes[3].CheckSerializedTransaction(t, false, 0)
+	nodes[4].CheckSerializedTransaction(t, false, 0)
+	nodes[5].CheckSerializedTransaction(t, false, 0)
+	nodes[6].CheckSerializedTransaction(t, false, 0)
+
+	nodes[1].SetSettlementLine(t, nodes[0], testconfig.Equivalent, "4000", vtcp.StatusOK)
+
+	time.Sleep(15 * time.Second)
+
+	nodes[2].SetSettlementLine(t, nodes[1], testconfig.Equivalent, "3000", vtcp.StatusOK)
+
+	time.Sleep(15 * time.Minute)
+
+	nodes[0].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 0, 1)
+	nodes[1].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[2].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[3].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[4].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[5].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 1)
+	nodes[6].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 1, 7, 1, 0)
+
+	nodes[0].CheckSerializedTransaction(t, false, 0)
+	nodes[1].CheckSerializedTransaction(t, false, 0)
+	nodes[2].CheckSerializedTransaction(t, false, 0)
+	nodes[3].CheckSerializedTransaction(t, false, 0)
+	nodes[4].CheckSerializedTransaction(t, false, 0)
+	nodes[5].CheckSerializedTransaction(t, false, 0)
+	nodes[6].CheckSerializedTransaction(t, false, 0)
+
+	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 0)
+}
+
+func Test12bAuditDuringRecoveryStageExchangeWithOnePaymentBefore(t *testing.T) {
+	nodes := setupNodesForDirectPaymentSevenNodesTest(t)
+
+	uuid, err := nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "100", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
+	if err != nil {
+		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
+	}
+
+	// self.flag_forbid_send_message_on_vote_consistency (Corresponds to flag)
+	nodes[0].SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteConsistency, "", "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageRecoveryStage, "", "")
+
+	uuid, err = nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "100", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
+	if err != nil {
+		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
+	}
+	time.Sleep(5 * time.Minute)
+
+	nodes[0].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, false)
+	nodes[1].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[2].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[3].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[4].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[5].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+	nodes[6].CheckNodeForLogMessage(t, uuid, vtcp.LogMessageRecoveringLogMessage, true)
+
+	nodes[0].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 0, 2)
+	nodes[1].CheckPaymentTransaction(t, vtcp.PaymentObservingStateNoInfo, 2, 7, 2, 2)
+	nodes[2].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 2, 2)
+	nodes[3].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 2, 2)
+	nodes[4].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 2, 2)
+	nodes[5].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 2, 2)
+	nodes[6].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 2, 0)
+
+	nodes[0].CheckSerializedTransaction(t, false, 0)
+	nodes[1].CheckSerializedTransaction(t, true, 0)
+	nodes[2].CheckSerializedTransaction(t, false, 0)
+	nodes[3].CheckSerializedTransaction(t, false, 0)
+	nodes[4].CheckSerializedTransaction(t, false, 0)
+	nodes[5].CheckSerializedTransaction(t, false, 0)
+	nodes[6].CheckSerializedTransaction(t, false, 0)
+
+	nodes[1].SetSettlementLine(t, nodes[0], testconfig.Equivalent, "4000", vtcp.StatusOK)
+	time.Sleep(15 * time.Second)
+	nodes[2].SetSettlementLine(t, nodes[1], testconfig.Equivalent, "3000", vtcp.StatusOK)
+
+	// Waiting for 15 minutes to simulate the time period of the recovery stage with observing
+	time.Sleep(15 * time.Minute)
+
+	nodes[0].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 0, 2)
+	nodes[1].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 2, 2)
+	nodes[2].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 2, 2)
+	nodes[3].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 2, 2)
+	nodes[4].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 2, 2)
+	nodes[5].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 2, 2)
+	nodes[6].CheckPaymentTransaction(t, vtcp.PaymentObservingStateCommitted, 2, 14, 2, 0)
+
+	nodes[0].CheckSerializedTransaction(t, false, 0)
+	nodes[1].CheckSerializedTransaction(t, false, 0)
+	nodes[2].CheckSerializedTransaction(t, false, 0)
+	nodes[3].CheckSerializedTransaction(t, false, 0)
+	nodes[4].CheckSerializedTransaction(t, false, 0)
+	nodes[5].CheckSerializedTransaction(t, false, 0)
+	nodes[6].CheckSerializedTransaction(t, false, 0)
+
+	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, 0)
+
+	nodes[0].SetTestingFlag(t, 0, "", "")
+	nodes[1].SetTestingFlag(t, 0, "", "")
+
+	uuid, err = nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[6], testconfig.Equivalent, "100", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
+	if err != nil {
+		t.Fatalf("CreateTransactionCheckStatus failed for node1: %v", err)
+	}
+
+	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 }

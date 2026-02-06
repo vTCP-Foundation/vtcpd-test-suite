@@ -199,10 +199,7 @@ func Test4aLostMessageOnReservationStageToReceiver(t *testing.T) {
 
 	// Test-specific logic
 	// var flagForbidSendInitMessage uint32 = 1 // Placeholder value from self.flag_forbid_send_init_message
-	err = nodeA.SetTestingFlag(vtcp.FlagForbidSendInitMessage, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeA.SetTestingFlag(t, vtcp.FlagForbidSendInitMessage, "", "")
 	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	// TODO : check synchronized settlement line
 }
@@ -228,10 +225,7 @@ func Test4bLostMessageOnReservationStageToCoordinator(t *testing.T) {
 
 	// Test-specific logic
 	// var flagForbidSendResponseToIntermediateNodeOnReservation uint32 = 2 // Placeholder value
-	err = nodeB.SetTestingFlag(vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeB.SetTestingFlag(t, vtcp.FlagForbidSendResponseToIntemediateOnReservation, "", "")
 	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	// TODO : check synchronized settlement line
 }
@@ -255,10 +249,7 @@ func Test5aLostMessageWithPublicKeysToReceiver(t *testing.T) {
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
 	nodeA.CheckMaxFlow(t, nodeB, testconfig.Equivalent, "1000")
 
-	err = nodeA.SetTestingFlag(vtcp.FlagForbidSendMessageVoteStage, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeA.SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteStage, "", "")
 
 	// it works because coordinator resend votes message
 	_, err = nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
@@ -295,10 +286,7 @@ func Test5bLostMessageWithSignatureToCoordinator(t *testing.T) {
 
 	// Test-specific logic
 	// var flagForbidSendMessageOnVoteConsistency uint32 = 4 // Placeholder value
-	err = nodeB.SetTestingFlag(vtcp.FlagForbidSendMessageVoteConsistency, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeB.SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteConsistency, "", "")
 
 	uuid, err := nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusProtocolError)
 	if err != nil {
@@ -349,10 +337,7 @@ func Test5cLostMessageWithSignatureToReceiver(t *testing.T) {
 
 	// Test-specific logic
 	// var flagForbidSendMessageOnVoteConsistency uint32 = 4 // Placeholder value
-	err = nodeA.SetTestingFlag(vtcp.FlagForbidSendMessageVoteConsistency, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeA.SetTestingFlag(t, vtcp.FlagForbidSendMessageVoteConsistency, "", "")
 
 	uuid, err := nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	if err != nil {
@@ -390,10 +375,7 @@ func Test6aReceiverCrashReservationStage(t *testing.T) {
 
 	// Test-specific logic
 	// var flagThrowExceptionOnPreviousNeighborRequest uint32 = 5 // Placeholder value
-	err = nodeB.SetTestingFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeB.SetTestingFlag(t, vtcp.FlagThrowExceptionPreviousNeighborRequest, "", "")
 	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	time.Sleep(10 * time.Second)
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
@@ -420,10 +402,7 @@ func Test6bReceiverCrashAfterSignBeforeSending(t *testing.T) {
 
 	// Test-specific logic
 	// var flagThrowExceptionOnVote uint32 = 6 // Placeholder value
-	err = nodeB.SetTestingFlag(vtcp.FlagThrowExceptionVote, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeB.SetTestingFlag(t, vtcp.FlagThrowExceptionVote, "", "")
 
 	uuid, err := nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusProtocolError)
 	if err != nil {
@@ -474,10 +453,7 @@ func Test6cReceiverCrashAfterVotesReceivingBeforeCommitting(t *testing.T) {
 
 	// Test-specific logic
 	// var flagThrowExceptionOnVoteConsistency uint32 = 7 // Placeholder value
-	err = nodeB.SetTestingFlag(vtcp.FlagThrowExceptionVoteConsistency, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeB.SetTestingFlag(t, vtcp.FlagThrowExceptionVoteConsistency, "", "")
 	uuid, err := nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK) // Python test expects normal creation
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed unexpectedly: %v", err)
@@ -514,10 +490,7 @@ func Test7aCoordinatorCrashReservationStage(t *testing.T) {
 
 	// Test-specific logic
 	// var flagThrowExceptionOnPreviousNeighborRequest uint32 = 5 // Placeholder value
-	err = nodeA.SetTestingFlag(vtcp.FlagThrowExceptionPreviousNeighborRequest, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeA.SetTestingFlag(t, vtcp.FlagThrowExceptionPreviousNeighborRequest, "", "")
 	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 }
@@ -543,10 +516,7 @@ func Test7bCoordinatorCrashAfterSendingMessageOnVoting(t *testing.T) {
 
 	// Test-specific logic
 	// var flagThrowExceptionOnVote uint32 = 6 // Placeholder value
-	err = nodeA.SetTestingFlag(vtcp.FlagThrowExceptionVote, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeA.SetTestingFlag(t, vtcp.FlagThrowExceptionVote, "", "")
 
 	uuid, err := nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	if err != nil {
@@ -597,10 +567,7 @@ func Test7cCoordinatorCrashAfterReceivingMessageWithSignature(t *testing.T) {
 
 	// Test-specific logic
 	// var flagThrowExceptionOnVoteConsistency uint32 = 7 // Placeholder value
-	err = nodeA.SetTestingFlag(vtcp.FlagThrowExceptionVoteConsistency, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeA.SetTestingFlag(t, vtcp.FlagThrowExceptionVoteConsistency, "", "")
 
 	uuid, err := nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	if err != nil {
@@ -651,10 +618,7 @@ func Test7dCoordinatorCrashAfterApprovingBeforeSendingMessageWithSignature(t *te
 
 	// Test-specific logic
 	// var flagThrowExceptionCoordinatorAfterApprove uint32 = 8 // Placeholder for flag_throw_exception_on_coordinator_after_approve_before_send_message
-	err = nodeA.SetTestingFlag(vtcp.FlagThrowExceptionCoordinatorAfterApprove, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeA.SetTestingFlag(t, vtcp.FlagThrowExceptionCoordinatorAfterApprove, "", "")
 	uuid, err := nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK) // Python status_code=None
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed unexpectedly: %v", err)
@@ -691,10 +655,7 @@ func Test8aReceiverProcessCrashReservationStage(t *testing.T) {
 
 	// Test-specific logic
 	// var flagTerminateProcessOnPreviousNeighborRequest uint32 = 9 // Placeholder value
-	err = nodeB.SetTestingFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeB.SetTestingFlag(t, vtcp.FlagTerminateProcessPreviousNeighborRequest, "", "")
 	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusInsufficientFunds)
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 }
@@ -720,10 +681,7 @@ func Test8bReceiverProcessCrashAfterSignBeforeSending(t *testing.T) {
 
 	// Test-specific logic
 	// var flagTerminateProcessOnVote uint32 = 10 // Placeholder value
-	err = nodeB.SetTestingFlag(vtcp.FlagTerminateProcessVote, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeB.SetTestingFlag(t, vtcp.FlagTerminateProcessVote, "", "")
 	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusProtocolError)
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 }
@@ -749,10 +707,7 @@ func Test8cReceiverProcessCrashAfterVotesReceivingBeforeCommitting(t *testing.T)
 
 	// Test-specific logic
 	// var flagTerminateProcessOnVoteConsistency uint32 = 11 // Placeholder value
-	err = nodeB.SetTestingFlag(vtcp.FlagTerminateProcessVoteConsistency, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeB.SetTestingFlag(t, vtcp.FlagTerminateProcessVoteConsistency, "", "")
 
 	uuid, err := nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK) // Python test expects normal creation
 	if err != nil {
@@ -803,10 +758,7 @@ func Test9aCoordinatorProcessCrashReservationStage(t *testing.T) {
 
 	// Test-specific logic
 	// var flagTerminateProcessOnPreviousNeighborRequest uint32 = 9 // Placeholder value
-	err = nodeA.SetTestingFlag(vtcp.FlagTerminateProcessPreviousNeighborRequest, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeA.SetTestingFlag(t, vtcp.FlagTerminateProcessPreviousNeighborRequest, "", "")
 	nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	nodeA.CheckSettlementLineForSync(t, nodeB, testconfig.Equivalent)
 }
@@ -832,10 +784,7 @@ func Test9bCoordinatorProcessCrashAfterSendingMessageOnVoting(t *testing.T) {
 
 	// Test-specific logic
 	// var flagTerminateProcessOnVote uint32 = 10 // Placeholder value
-	err = nodeA.SetTestingFlag(vtcp.FlagTerminateProcessVote, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
+	nodeA.SetTestingFlag(t, vtcp.FlagTerminateProcessVote, "", "")
 
 	uuid, err := nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	if err != nil {
@@ -870,13 +819,7 @@ func Test9cCoordinatorProcessCrashAfterReceivingMessageWithSignature(t *testing.
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
 	nodeA.CheckMaxFlow(t, nodeB, testconfig.Equivalent, "1000")
 
-	// Test-specific logic
-	// var flagTerminateProcessOnVoteConsistency uint32 = 11 // Placeholder value
-	err = nodeA.SetTestingFlag(vtcp.FlagTerminateProcessVoteConsistency, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
-
+	nodeA.SetTestingFlag(t, vtcp.FlagTerminateProcessVoteConsistency, "", "")
 	uuid, err := nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK)
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed unexpectedly: %v", err)
@@ -924,13 +867,7 @@ func Test9dCoordinatorProcessCrashAfterApprovingBeforeSendingMessageWithSignatur
 	nodeB.CreateChannelAndSettlementLineAndCheck(t, nodeA, testconfig.Equivalent, "1000")
 	nodeA.CheckMaxFlow(t, nodeB, testconfig.Equivalent, "1000")
 
-	// Test-specific logic
-	// var flagTerminateProcessCoordinatorAfterApprove uint32 = 12 // Placeholder value
-	err = nodeA.SetTestingFlag(vtcp.FlagTerminateProcessCoordinatorAfterApprove, "", "")
-	if err != nil {
-		t.Fatalf("SetTestingFlag failed: %v", err)
-	}
-
+	nodeA.SetTestingFlag(t, vtcp.FlagTerminateProcessCoordinatorAfterApprove, "", "")
 	uuid, err := nodeA.CreateTransactionCheckStatus(t, nodeB, testconfig.Equivalent, "1000", vtcp.StatusOK) // Python status_code=None
 	if err != nil {
 		t.Fatalf("CreateTransactionCheckStatus failed unexpectedly: %v", err)

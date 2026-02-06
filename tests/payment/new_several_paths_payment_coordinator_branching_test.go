@@ -67,7 +67,7 @@ func Test1ExchangeCoordinatorBranchingNormalAmount(t *testing.T) {
 func Test2aExchangeCoordinatorBranchingSeveralRunNextNeighborResponseProcessingStageLostMessageMiddlePathPaymentPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathExchangeCoordinatorBranchingTest(t)
 
-	nodes[2].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
+	nodes[2].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[5], testconfig.Equivalent, "800", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckExchangeMaxFlow(t, nodes[5], testconfig.Equivalent, []string{testconfig.Equivalent}, "200")
@@ -76,7 +76,7 @@ func Test2aExchangeCoordinatorBranchingSeveralRunNextNeighborResponseProcessingS
 func Test2bExchangeCoordinatorBranchingSeveralRunNextNeighborResponseProcessingStageLostMessageMiddlePathPaymentDontPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathExchangeCoordinatorBranchingTest(t)
 
-	nodes[2].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
+	nodes[2].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[5], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckExchangeMaxFlow(t, nodes[5], testconfig.Equivalent, []string{testconfig.Equivalent}, "1000")
@@ -85,7 +85,7 @@ func Test2bExchangeCoordinatorBranchingSeveralRunNextNeighborResponseProcessingS
 func Test3ExchangeCoordinatorBranchingLostMsgRunNextNeighborResponseProcessingStageOnLongWay(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathExchangeCoordinatorBranchingTest(t)
 
-	nodes[4].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, "", "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[5], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckExchangeMaxFlow(t, nodes[5], testconfig.Equivalent, []string{testconfig.Equivalent}, "1000")
@@ -94,7 +94,7 @@ func Test3ExchangeCoordinatorBranchingLostMsgRunNextNeighborResponseProcessingSt
 func Test4aExchangeCoordinatorBranchingLostRunPreviousNeighborRequestProcessingStageMsgFromCommonNodeToCoordinatorPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathExchangeCoordinatorBranchingTest(t)
 
-	nodes[1].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[5], testconfig.Equivalent, "500", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckExchangeMaxFlow(t, nodes[5], testconfig.Equivalent, []string{testconfig.Equivalent}, "500")
@@ -103,7 +103,7 @@ func Test4aExchangeCoordinatorBranchingLostRunPreviousNeighborRequestProcessingS
 func Test4bExchangeCoordinatorBranchingLostRunPreviousNeighborRequestProcessingStageMsgFromCommonNodeToCoordinatorDontPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathExchangeCoordinatorBranchingTest(t)
 
-	nodes[1].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[5].GetIPAddressForRequests(), "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[5], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckExchangeMaxFlow(t, nodes[5], testconfig.Equivalent, []string{testconfig.Equivalent}, "1000")
@@ -112,7 +112,7 @@ func Test4bExchangeCoordinatorBranchingLostRunPreviousNeighborRequestProcessingS
 func Test5aExchangeCoordinatorBranchingLostRunPreviousNeighborRequestProcessingStageMsgFromCommonNodeToCoordinatorPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathExchangeCoordinatorBranchingTest(t)
 
-	nodes[1].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[2].GetIPAddressForRequests(), "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[2].GetIPAddressForRequests(), "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[5], testconfig.Equivalent, "800", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusOK)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckExchangeMaxFlow(t, nodes[5], testconfig.Equivalent, []string{testconfig.Equivalent}, "200")
@@ -121,7 +121,7 @@ func Test5aExchangeCoordinatorBranchingLostRunPreviousNeighborRequestProcessingS
 func Test5bExchangeCoordinatorBranchingLostRunPreviousNeighborRequestProcessingStageMsgFromCommonNodeToCoordinatorDontPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathExchangeCoordinatorBranchingTest(t)
 
-	nodes[1].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[2].GetIPAddressForRequests(), "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[2].GetIPAddressForRequests(), "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[5], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckExchangeMaxFlow(t, nodes[5], testconfig.Equivalent, []string{testconfig.Equivalent}, "1000")
@@ -130,7 +130,7 @@ func Test5bExchangeCoordinatorBranchingLostRunPreviousNeighborRequestProcessingS
 func Test6ExchangeCoordinatorBranchingLostRunPreviousNeighborRequestProcessingStageMsgFromCommonNodeToCoordinatorDontPassed(t *testing.T) {
 	nodes, _ := setupNodesForSeveralPathExchangeCoordinatorBranchingTest(t)
 
-	nodes[1].SetTestingFlag(vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[3].GetIPAddressForRequests(), "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagForbidSendMessageToCoordinatorReservation, nodes[3].GetIPAddressForRequests(), "")
 	nodes[0].CreateExchangeTransactionCheckStatus(t, nodes[5], testconfig.Equivalent, "1000", testconfig.Equivalent, vtcp.NoMaxAllowablePaymentAmount, vtcp.StatusInsufficientFunds)
 	vtcp.CheckSettlementLineForSyncBatch(t, nodes, testconfig.Equivalent, vtcp.WaitingParticipantsVotesSec)
 	nodes[0].CheckExchangeMaxFlow(t, nodes[5], testconfig.Equivalent, []string{testconfig.Equivalent}, "1000")

@@ -53,7 +53,7 @@ func setupNodesForPaymentTimeoutsPartThreeTest(t *testing.T) ([]*vtcp.Node, *vtc
 func TestTimeoutsPartThree1TimesleepIntermediateNodeBeforeLastConfiguration(t *testing.T) {
 	nodes, _ := setupNodesForPaymentTimeoutsPartThreeTest(t)
 
-	nodes[2].SetTestingFlag(vtcp.FlagSleepOnFinalAmountClarification, "", "")
+	nodes[2].SetTestingFlag(t, vtcp.FlagSleepOnFinalAmountClarification, "", "")
 
 	nodes[0].CreateTransactionCheckStatus(t, nodes[4], testconfig.Equivalent, "500", vtcp.StatusNoConsensusError)
 
@@ -63,7 +63,7 @@ func TestTimeoutsPartThree1TimesleepIntermediateNodeBeforeLastConfiguration(t *t
 func TestTimeoutsPartThree2TimesleepOneIntermediateNodeWhileSigning(t *testing.T) {
 	nodes, _ := setupNodesForPaymentTimeoutsPartThreeTest(t)
 
-	nodes[2].SetTestingFlag(vtcp.FlagSleepOnVoteConsistencyStage, "", "")
+	nodes[2].SetTestingFlag(t, vtcp.FlagSleepOnVoteConsistencyStage, "", "")
 
 	nodes[0].CreateTransactionCheckStatus(t, nodes[4], testconfig.Equivalent, "500", vtcp.StatusNoConsensusError)
 
@@ -131,10 +131,10 @@ func TestTimeoutsPartThree2TimesleepOneIntermediateNodeWhileSigning(t *testing.T
 func TestTimeoutsPartThree3TimesleepAllIntermediateNodeBeforeSendingToCoordinator(t *testing.T) {
 	nodes, _ := setupNodesForPaymentTimeoutsPartThreeTest(t)
 
-	nodes[1].SetTestingFlag(vtcp.FlagSleepOnVoteConsistencyStage, "", "")
-	nodes[2].SetTestingFlag(vtcp.FlagSleepOnVoteConsistencyStage, "", "")
-	nodes[3].SetTestingFlag(vtcp.FlagSleepOnVoteConsistencyStage, "", "")
-	nodes[4].SetTestingFlag(vtcp.FlagSleepOnVoteConsistencyStage, "", "")
+	nodes[1].SetTestingFlag(t, vtcp.FlagSleepOnVoteConsistencyStage, "", "")
+	nodes[2].SetTestingFlag(t, vtcp.FlagSleepOnVoteConsistencyStage, "", "")
+	nodes[3].SetTestingFlag(t, vtcp.FlagSleepOnVoteConsistencyStage, "", "")
+	nodes[4].SetTestingFlag(t, vtcp.FlagSleepOnVoteConsistencyStage, "", "")
 
 	nodes[0].CreateTransactionCheckStatus(t, nodes[4], testconfig.Equivalent, "500", vtcp.StatusNoConsensusError)
 
@@ -202,7 +202,7 @@ func TestTimeoutsPartThree3TimesleepAllIntermediateNodeBeforeSendingToCoordinato
 func TestTimeoutsPartThree4TimesleepCoordinatorBeforeSendingFinalConfigurationMessage(t *testing.T) {
 	nodes, _ := setupNodesForPaymentTimeoutsPartThreeTest(t)
 
-	nodes[0].SetTestingFlag(vtcp.FlagSleepOnVoteConsistencyStage, "", "")
+	nodes[0].SetTestingFlag(t, vtcp.FlagSleepOnVoteConsistencyStage, "", "")
 
 	nodes[0].CreateTransactionCheckStatus(t, nodes[4], testconfig.Equivalent, "500", vtcp.StatusOK)
 
